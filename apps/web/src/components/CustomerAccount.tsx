@@ -92,7 +92,7 @@ export function CustomerAccount({view}:{view:View}) {
         {notice&&<p className="auth-message success" role="status"><CheckCircle2 size={18}/>{notice}</p>}
         {!done&&<form className="customer-auth-form" onSubmit={submit}>
           {view==='register'&&<label>الاسم الكامل
-            <input autoComplete="name" required minLength={2} maxLength={80} value={name} onChange={e=>setName(e.target.value)} placeholder="اسمك الكريم" />
+            <input autoComplete="name" required minLength={2} maxLength={80} value={name} onChange={e=>setName(e.target.value)} placeholder="الاسم الكامل" />
           </label>}
           {(['login','register','forgot-password'] as View[]).includes(view)&&<label>البريد الإلكتروني
             <input type="email" autoComplete="email" dir="ltr" required maxLength={254} value={email} onChange={e=>setEmail(e.target.value)} placeholder="name@example.com" />
@@ -100,16 +100,16 @@ export function CustomerAccount({view}:{view:View}) {
           {(['login','register','reset-password'] as View[]).includes(view)&&<label>{view==='login'?'كلمة المرور':'كلمة المرور الجديدة'}
             <div className="password-entry">
               <input type={showPassword?'text':'password'} autoComplete={view==='login'?'current-password':'new-password'}
-                minLength={view==='login'?1:12} required value={password} onChange={e=>setPassword(e.target.value)}
-                placeholder={view==='login'?'كلمة المرور':'12 حرفًا على الأقل'} />
+                minLength={view==='login'?1:8} required value={password} onChange={e=>setPassword(e.target.value)}
+                placeholder={view==='login'?'كلمة المرور':'8 أحرف على الأقل'} />
               <button type="button" onClick={()=>setShowPassword(v=>!v)} aria-label={showPassword?'إخفاء كلمة المرور':'إظهار كلمة المرور'}>{showPassword?<EyeOff size={18}/>:<Eye size={18}/>}</button>
             </div>
           </label>}
           {(view==='register'||view==='reset-password')&&<label>تأكيد كلمة المرور
-            <input type={showPassword?'text':'password'} autoComplete="new-password" minLength={12} required
+            <input type={showPassword?'text':'password'} autoComplete="new-password" minLength={8} required
               value={confirm} onChange={e=>setConfirm(e.target.value)} placeholder="أعد إدخال كلمة المرور" />
           </label>}
-          {(view==='register'||view==='reset-password')&&<small className="auth-hint">استخدم 12 حرفًا على الأقل، ويفضّل الجمع بين كلمات غير متوقعة وأرقام ورموز.</small>}
+          {(view==='register'||view==='reset-password')&&<small className="auth-hint">الحد الأدنى 8 أحرف، ولحماية حسابك نوصي بكلمة مرور أطول يصعب تخمينها.</small>}
           <button type="submit" className="button dark block" disabled={busy||(needsMail&&mailReady!==true)}>
             {busy?'جارٍ المعالجة…':view==='login'?'دخول الحساب':view==='register'?'إنشاء حساب وإرسال رابط التفعيل':view==='forgot-password'?'إرسال رابط الاستعادة':view==='reset-password'?'حفظ كلمة المرور الجديدة':'تأكيد البريد الإلكتروني'}
             <ArrowLeft size={17}/>

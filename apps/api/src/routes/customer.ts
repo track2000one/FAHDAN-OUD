@@ -8,7 +8,7 @@ import { emailEnabled, sendCustomerMail, type MailPurpose } from '../lib/transac
 
 export const customerRouter = Router();
 const email = z.string().trim().toLowerCase().email().max(254);
-const password = z.string().min(12).max(72).refine(v => Buffer.byteLength(v,'utf8') <= 72,
+const password = z.string().min(8).max(72).refine(v => Buffer.byteLength(v,'utf8') <= 72,
   'كلمة المرور طويلة جدًا.');
 const registration = z.object({name:z.string().trim().min(2).max(80),email,password});
 const emailOnly = z.object({email});
@@ -44,7 +44,7 @@ customerRouter.post('/register',async(req,res,next)=>{
   try {
     if(!emailEnabled()){res.status(503).json({error:'تسجيل الحسابات غير متاح مؤقتًا حتى تفعيل البريد الإلكتروني للمتجر.'});return;}
     const parsed=registration.safeParse(req.body);
-    if(!parsed.success){res.status(400).json({error:'تحقق من الاسم والبريد الإلكتروني وكلمة مرور لا تقل عن 12 حرفًا.'});return;}
+    if(!parsed.success){res.status(400).json({error:'تحقق من الاسم والبريد الإلكتروني وكلمة مرور لا تقل عن 8 أحرف.'});return;}
     const {name,email:address,password:pass}=parsed.data;
     let existing=await prisma.user.findUnique({where:{email:address}});
     if(!existing){
@@ -125,7 +125,7 @@ customerRouter.post('/forgot-password',async(req,res,next)=>{
 customerRouter.post('/reset-password',async(req,res,next)=>{
   try {
     const data=reset.safeParse(req.body);
-    if(!data.success){res.status(400).json({error:'تحقق من رابط الاستعادة وكلمة المرور الجديدة (12 حرفًا على الأقل).'});return;}
+    if(!data.success){res.status(400).json({error:'تحقق من رابط الاستعادة وكلمة المرور الجديدة (8 أحرف على الأقل).'});return;}
     const row=await prisma.emailActionToken.findUnique({
       where:{tokenHash:digest(data.data.token)},include:{user:true}
     });
