@@ -167,6 +167,7 @@ model ProductMedia {
   product   Product   @relation(fields: [productId], references: [id])
   kind      MediaKind
   url       String
+  driveFileId String? @unique
   altAr     String?
   sort      Int       @default(0)
   createdAt DateTime  @default(now())

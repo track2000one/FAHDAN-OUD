@@ -1,4 +1,6 @@
-import { Router } from 'express';
+import { Router, raw } from 'express';
+import { randomUUID } from 'node:crypto';
+import { driveStatus, uploadImage, deleteImage, isImage } from '../lib/google-drive.js';
 import { prisma } from '../lib/db.js';
 import { requireOwner } from '../lib/auth.js';
 
@@ -46,4 +48,33 @@ adminRouter.get('/products', async (_req, res, next) => {
       variantCount: p.variants.length
     })));
   } catch (e) { next(e); }
+});
+
+adminRouter.get('/media/status', async (_req, res) => {
+  try { const status = await driveStatus(); res.json({ provider: 'google-drive', ...status }); }
+  catch { res.status(503).json({ provider: 'google-drive', configured: true, authorized: false, folderUrl: null,
+    error: 'تعذر اتصال Google Drive؛ راجع تفويض الحساب أو صلاحيات المجلد.' }); }
+});
+
+adminRouter.post('/products/:productId/images', raw({ type: ['image/jpeg','image/png','image/webp'], limit:'6mb' }), async (req,res,next) => {
+  try {
+    const mime = (req.headers['content-type'] || '').split(';')[0].trim();
+    if (!Buffer.isBuffer(req.body) || !isImage(req.body, mime)) {
+      res.status(400).json({error:'اختر صورة JPG أو PNG أو WEBP لا تتجاوز 6 ميجابايت.'}); return;
+    }
+    const product = await prisma.product.findUnique({where:{id:req.params.productId},select:{id:true,nameAr:true}});
+    if (!product) {res.status(404).json({error:'المنتج غير موجود.'});return;}
+    const fileId = await uploadImage(req.body,mime);
+    const mediaId = randomUUID();
+    try {
+      const media = await prisma.productMedia.create({data:{
+        id:mediaId,productId:product.id,kind:'PHOTO',driveFileId:fileId,
+        url:`/api/v1/media/${mediaId}`,altAr:product.nameAr,sort:0
+      }});
+      res.status(201).json({id:media.id,url:media.url});
+    } catch (err) {
+      try { await deleteImage(fileId); } catch { console.error('Google Drive cleanup after DB failure was unsuccessful.'); }
+      throw err;
+    }
+  } catch(err) {next(err);}
 });
