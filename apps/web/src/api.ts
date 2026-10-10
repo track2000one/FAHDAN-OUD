@@ -27,3 +27,23 @@ export function signIn(email:string,password:string) {
 export function getDashboard(token:string) {
   return request<Dashboard>('/admin/dashboard',{headers:{Authorization:`Bearer ${token}`}});
 }
+
+export type AdminProduct = {id:string;name:string;status:string;unit:string;onHand:number;reserved:number;reorderPoint:number;variantCount:number};
+export function getAdminProducts(token:string) {
+  return request<AdminProduct[]>('/admin/products',{headers:{Authorization:`Bearer ${token}`}});
+}
+export function getDriveStatus(token:string) {
+  return request<{provider:string;configured:boolean;authorized:boolean;folderUrl:string|null}>('/admin/media/status',
+    {headers:{Authorization:`Bearer ${token}`}});
+}
+export async function uploadAdminProductImage(token:string,productId:string,file:File) {
+  if (!['image/jpeg','image/png','image/webp'].includes(file.type) || file.size > 6*1024*1024) {
+    throw new Error('اختر صورة مدعومة لا تتجاوز 6 ميجابايت.');
+  }
+  const res = await fetch(endpoint(`/admin/products/${encodeURIComponent(productId)}/images`),{
+    method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':file.type},body:file
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data?.error||`HTTP ${res.status}`);
+  return data as {id:string;url:string};
+}
