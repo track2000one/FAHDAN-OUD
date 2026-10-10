@@ -25,6 +25,8 @@ if (env.NODE_ENV === 'production' && env.JWT_SECRET.includes('replace_with_')) {
 }
 
 const app = express();
+// Railway terminates HTTPS at its edge proxy; trust exactly one forwarding hop.
+app.set('trust proxy', 1);
 app.disable('x-powered-by');
 app.use(helmet());
 app.use(cors({ origin: env.WEB_ORIGIN }));
