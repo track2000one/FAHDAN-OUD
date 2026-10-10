@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, CheckCircle2, Eye, EyeOff, KeyRound, LockKeyhole, Mail, UserRound, ShieldCheck } from 'lucide-react';
 import { customerForgot, customerLogin, customerMe, customerRegister, customerReset, customerStatus, customerVerify } from '../api';
 
@@ -16,7 +16,6 @@ const SKEY='fahdan-customer-session';
 export function CustomerAccount({view}:{view:View}) {
   const [params]=useSearchParams();
   const token=params.get('token')||'';
-  const navigate=useNavigate();
   const [email,setEmail]=useState('');
   const [name,setName]=useState('');
   const [password,setPassword]=useState('');
