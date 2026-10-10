@@ -46,7 +46,15 @@ async function main() {
       update: { passwordHash, role: 'OWNER', enabled: true } });
     console.log('Owner user provisioned. Change/remove ADMIN_PASSWORD from environment after setup.');
   } else {
-    console.log('Owner not created. Set ADMIN_EMAIL and a unique ADMIN_PASSWORD (>=16 chars), then rerun seed.');
+    // Diagnostic flags only. Never log an email, password, hash or token.
+    console.log('Owner setup checks:', JSON.stringify({
+      emailProvided: Boolean(email),
+      emailContainsAt: Boolean(email?.includes('@')),
+      passwordProvided: Boolean(password),
+      passwordAtLeast16: Boolean(password && password.length >= 16),
+      passwordNotPlaceholder: Boolean(password && !password.includes('replace_with_'))
+    }));
+    console.log('Owner not created. Correct failed setup checks before retrying.');
   }
   if (process.env.SEED_DEMO !== 'true') {
     console.log('Categories ready. Demo products skipped (SEED_DEMO != true).');
