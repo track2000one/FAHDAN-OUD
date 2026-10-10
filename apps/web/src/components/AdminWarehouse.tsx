@@ -14,14 +14,16 @@ export function AdminWarehouse({token}:{token:string}) {
     let active = true;
     Promise.allSettled([getAdminProducts(token),getDriveStatus(token)]).then(results => {
       if (!active) return;
-      if (results[0].status === 'fulfilled') {
-        setProducts(results[0].value);
-        setSelected(prev=>prev||results[0].value[0]?.id||'');
+      const productsResult = results[0];
+      const driveResult = results[1];
+      if (productsResult.status === 'fulfilled') {
+        setProducts(productsResult.value);
+        setSelected(prev=>prev||productsResult.value[0]?.id||'');
       } else setMessage('تعذر تحميل المستودع.');
-      if (results[1].status === 'fulfilled') {
-        setReady(results[1].value.authorized);
-        setFolderUrl(results[1].value.folderUrl);
-        if (!results[1].value.authorized) setMessage('ربط صور Google Drive لم يُعتمد بعد.');
+      if (driveResult.status === 'fulfilled') {
+        setReady(driveResult.value.authorized);
+        setFolderUrl(driveResult.value.folderUrl);
+        if (!driveResult.value.authorized) setMessage('ربط صور Google Drive لم يُعتمد بعد.');
       } else setMessage('تعذر التحقق من صلاحية Google Drive. راجع التفويض.');
     });
     return () => {active = false;};
