@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, BadgeCheck, Box, Check, ChevronDown, Gift, Layou
 import { getCatalog, getDashboard, signIn } from './api';
 import { ProductArt } from './components/ProductArt';
 import { AdminWarehouse } from './components/AdminWarehouse';
+import { CustomerAccount } from './components/CustomerAccount';
 import { demoProducts, fallbackCategories } from './demo';
 import type { CartLine, Dashboard, Product, Variant } from './types';
 
@@ -32,7 +33,7 @@ function Header({cartCount,openCart}:{cartCount:number;openCart:()=>void}) {
       </nav>
       <div className="header-tools">
         <button className="bag-button" aria-label={`فتح السلة: ${cartCount} منتجات`} onClick={openCart}><ShoppingBag size={21}/>{cartCount>0&&<span className="bag-count">{cartCount}</span>}</button>
-        <Link className="header-admin" to="/admin" aria-label="لوحة الإدارة"><UserRound size={20}/></Link>
+        <Link className="header-admin" to="/account/login" aria-label="تسجيل الدخول أو إنشاء حساب"><UserRound size={20}/></Link>
         <button className="mobile-menu" onClick={()=>setMenu(!menu)} aria-label={menu?'إغلاق القائمة':'فتح القائمة'}>{menu?<X size={23}/>:<Menu size={23}/>}</button>
       </div>
     </div></header>
@@ -132,7 +133,7 @@ function Admin() {
     <AdminWarehouse token={token}/>
   </main>;
 }
-function Footer(){return <footer className="footer"><div className="container footer-main"><div><Brand inverse/><p>تجربة عصرية تنطلق من أصالة العود والبخور، وتمنح التفاصيل مكانتها.</p></div><div><h3>تصفح فهدان</h3><Link to="/">الرئيسية</Link><Link to="/#products">المنتجات</Link><Link to="/admin">لوحة الإدارة</Link></div><div><h3>معلومات المتجر</h3><span>التواصل: يحدد لاحقًا</span><span>الشحن: تحت الإعداد</span><span>الدفع: غير مفعل</span></div><div className="footer-letter"><span>FAHDAN</span><strong>للطيب حكاية</strong></div></div><div className="footer-bottom container"><span>© فهدان للعود — نسخة تطويرية 2026</span><span>بُنيت بعناية لتكبر مع فهدان</span></div></footer>}
+function Footer(){return <footer className="footer"><div className="container footer-main"><div><Brand inverse/><p>تجربة عصرية تنطلق من أصالة العود والبخور، وتمنح التفاصيل مكانتها.</p></div><div><h3>تصفح فهدان</h3><Link to="/">الرئيسية</Link><Link to="/#products">المنتجات</Link><Link to="/account/login">حسابي</Link><Link to="/admin">لوحة الإدارة</Link></div><div><h3>معلومات المتجر</h3><span>التواصل: يحدد لاحقًا</span><span>الشحن: تحت الإعداد</span><span>الدفع: غير مفعل</span></div><div className="footer-letter"><span>FAHDAN</span><strong>للطيب حكاية</strong></div></div><div className="footer-bottom container"><span>© فهدان للعود — نسخة تطويرية 2026</span><span>بُنيت بعناية لتكبر مع فهدان</span></div></footer>}
 export default function App(){
   const [products,setProducts]=useState<Product[]>(demoProducts),[categories,setCategories]=useState(fallbackCategories),[connected,setConnected]=useState(false);
   const [cart,setCart]=useState<CartLine[]>(readCart),[cartOpen,setCartOpen]=useState(false),[toast,setToast]=useState('');
@@ -157,5 +158,10 @@ export default function App(){
       return prev.map(x=>x.sku===sku?{...x,quantity:x.quantity+diff}:x);
     });
   };
-  return <div className="app"><Header cartCount={cart.reduce((n,x)=>n+x.quantity,0)} openCart={()=>setCartOpen(true)}/><Routes><Route path="/" element={<Home products={products} categories={categories} connected={connected}/>}/><Route path="/product/:slug" element={<ProductPage products={products} add={add}/>}/><Route path="/admin" element={<Admin/>}/><Route path="*" element={<main className="container missing"><h1>الصفحة غير موجودة</h1><button className="button dark" onClick={()=>navigate('/')}>العودة للرئيسية</button></main>}/></Routes><Footer/><CartDrawer cart={cart} visible={cartOpen} close={()=>setCartOpen(false)} change={change} remove={sku=>setCart(prev=>prev.filter(x=>x.sku!==sku))}/>{toast&&<div className="toast" role="status"><Check size={17}/>{toast}</div>}</div>;
+  return <div className="app"><Header cartCount={cart.reduce((n,x)=>n+x.quantity,0)} openCart={()=>setCartOpen(true)}/><Routes><Route path="/" element={<Home products={products} categories={categories} connected={connected}/>}/><Route path="/product/:slug" element={<ProductPage products={products} add={add}/>}/><Route path="/account/login" element={<CustomerAccount view="login"/>}/>
+<Route path="/account/register" element={<CustomerAccount view="register"/>}/>
+<Route path="/account/forgot-password" element={<CustomerAccount view="forgot-password"/>}/>
+<Route path="/account/reset-password" element={<CustomerAccount view="reset-password"/>}/>
+<Route path="/account/verify" element={<CustomerAccount view="verify"/>}/>
+<Route path="/admin" element={<Admin/>}/><Route path="*" element={<main className="container missing"><h1>الصفحة غير موجودة</h1><button className="button dark" onClick={()=>navigate('/')}>العودة للرئيسية</button></main>}/></Routes><Footer/><CartDrawer cart={cart} visible={cartOpen} close={()=>setCartOpen(false)} change={change} remove={sku=>setCart(prev=>prev.filter(x=>x.sku!==sku))}/>{toast&&<div className="toast" role="status"><Check size={17}/>{toast}</div>}</div>;
 }

@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { prisma } from './lib/db.js';
 import { catalogRouter } from './routes/catalog.js';
 import { authRouter } from './routes/auth.js';
+import { customerRouter } from './routes/customer.js';
 import { adminRouter } from './routes/admin.js';
 import { mediaRouter } from './routes/media.js';
 
@@ -39,6 +40,7 @@ app.get('/api/v1/health', async (_req, res) => {
 app.use('/api/v1', catalogRouter);
 app.use('/api/v1', mediaRouter);
 app.use('/api/v1/auth', rateLimit({ windowMs: 15 * 60 * 1000, limit: 10, standardHeaders: 'draft-7', legacyHeaders: false }), authRouter);
+app.use('/api/v1/customer', rateLimit({ windowMs: 15 * 60 * 1000, limit: 15, standardHeaders: 'draft-7', legacyHeaders: false }), customerRouter);
 app.use('/api/v1/admin', adminRouter);
 app.use('/api', (_req, res) => res.status(404).json({ error: 'المسار غير موجود.' }));
 
