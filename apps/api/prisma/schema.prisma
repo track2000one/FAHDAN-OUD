@@ -1,0 +1,374 @@
+// Fahdan Oud — initial domain model, review and migrate before production.
+// Prices and quantities are DECIMAL, not binary floating point.
+// Stock is tracked per product in its base unit, NOT separately per sellable weight SKU.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  INVENTORY_MANAGER
+  SALES
+  ACCOUNTANT
+  CUSTOMER
+}
+
+enum ProductKind {
+  NATURAL_OUD
+  TREATED_OUD
+  BAKHOOR
+  OUD_OIL
+  FRANKINCENSE
+  PERFUME
+  GIFT_BOX
+  OTHER
+}
+
+enum BaseUnit {
+  GRAM
+  MILLILITER
+  PIECE
+}
+
+enum ProductState {
+  DRAFT
+  ACTIVE
+  OUT_OF_STOCK
+  ARCHIVED
+}
+
+enum MediaKind {
+  PHOTO
+  VIDEO
+}
+
+enum StockMovementKind {
+  PURCHASE_RECEIPT
+  SALE_SHIPPED
+  SAMPLE
+  MARKETING
+  RETURN_RESTOCK
+  DAMAGE
+  LOSS
+  ADJUSTMENT
+}
+
+enum ReservationState {
+  ACTIVE
+  RELEASED
+  FULFILLED
+  EXPIRED
+}
+
+enum OrderState {
+  PENDING_PAYMENT
+  PAID
+  PREPARING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  RETURN_REQUESTED
+  RETURNED
+}
+
+enum PaymentState {
+  PENDING
+  AUTHORIZED
+  CAPTURED
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum ShipmentState {
+  NOT_CREATED
+  LABEL_CREATED
+  IN_TRANSIT
+  DELIVERED
+  RETURNED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  phone        String?
+  passwordHash String?
+  role         Role     @default(CUSTOMER)
+  enabled      Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  orders       Order[]
+  auditLogs    AuditLog[]
+}
+
+model Category {
+  id       String    @id @default(cuid())
+  slug     String    @unique
+  nameAr   String
+  nameEn   String?
+  sort     Int       @default(0)
+  products Product[]
+}
+
+model Supplier {
+  id           String        @id @default(cuid())
+  name         String
+  contact      String?
+  country      String?
+  privateNotes String?       // Sensitive: admin-only, never public API.
+  purchases    Purchase[]
+  createdAt    DateTime      @default(now())
+}
+
+model Product {
+  id              String            @id @default(cuid())
+  slug            String            @unique
+  nameAr          String
+  nameEn          String?
+  kind            ProductKind
+  categoryId      String
+  category        Category          @relation(fields: [categoryId], references: [id])
+  originCountry   String?
+  originRegion    String?
+  grade           String?
+  treatmentNotes  String?
+  scentProfile    String?
+  descriptionAr   String?
+  projectionScore Int?              // Suggested 1–5, validate on server.
+  longevityScore  Int?              // Suggested 1–5, validate on server.
+  uses            String[]          @default([])
+  baseUnit        BaseUnit          @default(GRAM)
+  state           ProductState      @default(DRAFT)
+  isDemo          Boolean           @default(false)
+  allowPreorder   Boolean           @default(false)
+  preorderNotice  String?
+  variants        ProductVariant[]
+  media           ProductMedia[]
+  purchaseLines   PurchaseLine[]
+  inventoryLots   InventoryLot[]
+  balance         InventoryBalance?
+  movements       StockMovement[]
+  reservations    StockReservation[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+model ProductMedia {
+  id        String    @id @default(cuid())
+  productId String
+  product   Product   @relation(fields: [productId], references: [id])
+  kind      MediaKind
+  url       String
+  altAr     String?
+  sort      Int       @default(0)
+  createdAt DateTime  @default(now())
+}
+
+model ProductVariant {
+  id                 String      @id @default(cuid())
+  productId          String
+  product            Product     @relation(fields: [productId], references: [id])
+  sku                String      @unique
+  labelAr            String
+  quantityBase       Decimal     @db.Decimal(14, 3) // 28.000 g, 125.000 g, etc.
+  priceSar           Decimal     @db.Decimal(14, 2)
+  compareAtPriceSar  Decimal?    @db.Decimal(14, 2)
+  active             Boolean     @default(true)
+  orderItems         OrderItem[]
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  @@unique([productId, quantityBase])
+}
+
+model Purchase {
+  id                 String         @id @default(cuid())
+  supplierId         String
+  supplier           Supplier       @relation(fields: [supplierId], references: [id])
+  invoiceReference   String?
+  receivedAt         DateTime
+  currency           String         @default("SAR")
+  inboundExtrasSar   Decimal        @default(0) @db.Decimal(14, 2) // Shipping/customs allocatable cost.
+  lines              PurchaseLine[]
+  notes              String?
+  createdAt          DateTime       @default(now())
+}
+
+model PurchaseLine {
+  id             String        @id @default(cuid())
+  purchaseId     String
+  purchase       Purchase      @relation(fields: [purchaseId], references: [id])
+  productId      String
+  product        Product       @relation(fields: [productId], references: [id])
+  quantityBase   Decimal       @db.Decimal(14, 3)
+  totalCostSar   Decimal       @db.Decimal(14, 2) // Allocated landed cost incl. extras.
+  lot            InventoryLot?
+  createdAt      DateTime      @default(now())
+}
+
+model InventoryLot {
+  id            String          @id @default(cuid())
+  lotNumber     String          @unique
+  productId     String
+  product       Product         @relation(fields: [productId], references: [id])
+  purchaseLineId String         @unique
+  purchaseLine  PurchaseLine    @relation(fields: [purchaseLineId], references: [id])
+  acquiredBase  Decimal         @db.Decimal(14, 3)
+  remainingBase Decimal         @db.Decimal(14, 3)
+  unitCostSar   Decimal         @db.Decimal(14, 6)
+  createdAt     DateTime        @default(now())
+  movements     StockMovement[]
+}
+
+model InventoryBalance {
+  productId      String   @id
+  product        Product  @relation(fields: [productId], references: [id])
+  onHandBase     Decimal  @default(0) @db.Decimal(14, 3)
+  reservedBase   Decimal  @default(0) @db.Decimal(14, 3)
+  reorderPoint   Decimal  @default(0) @db.Decimal(14, 3)
+  version        Int      @default(0) // Atomic conditional updates / optimistic locking.
+  updatedAt      DateTime @updatedAt
+}
+
+model StockMovement {
+  id             String            @id @default(cuid())
+  productId      String
+  product        Product           @relation(fields: [productId], references: [id])
+  lotId          String?
+  lot            InventoryLot?     @relation(fields: [lotId], references: [id])
+  kind           StockMovementKind
+  deltaBase      Decimal           @db.Decimal(14, 3) // Signed, negative for sales/samples.
+  unitCostSar    Decimal?          @db.Decimal(14, 6)
+  sourceRef      String?           // Purchase, shipment, adjustment ID.
+  idempotencyKey String?           @unique
+  reason         String?
+  createdAt      DateTime          @default(now())
+
+  @@index([productId, createdAt])
+}
+
+model StockReservation {
+  id            String           @id @default(cuid())
+  orderId       String
+  order         Order            @relation(fields: [orderId], references: [id])
+  productId     String
+  product       Product          @relation(fields: [productId], references: [id])
+  quantityBase  Decimal          @db.Decimal(14, 3)
+  state         ReservationState @default(ACTIVE)
+  expiresAt     DateTime
+  createdAt     DateTime         @default(now())
+
+  @@index([state, expiresAt])
+}
+
+model Order {
+  id                String             @id @default(cuid())
+  orderNumber       String             @unique
+  customerId        String?
+  customer          User?              @relation(fields: [customerId], references: [id])
+  guestName         String?
+  guestPhone        String?
+  guestEmail        String?
+  addressSnapshot   Json               // Check PII retention and access permissions.
+  state             OrderState         @default(PENDING_PAYMENT)
+  subtotalSar       Decimal            @db.Decimal(14, 2)
+  discountSar       Decimal            @default(0) @db.Decimal(14, 2)
+  shippingSar       Decimal            @default(0) @db.Decimal(14, 2)
+  taxSar            Decimal            @default(0) @db.Decimal(14, 2)
+  totalSar          Decimal            @db.Decimal(14, 2)
+  giftMessage       String?
+  giftWrapFeeSar    Decimal            @default(0) @db.Decimal(14, 2)
+  items             OrderItem[]
+  reservations      StockReservation[]
+  payments          Payment[]
+  shipments         Shipment[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+}
+
+model OrderItem {
+  id              String         @id @default(cuid())
+  orderId         String
+  order           Order          @relation(fields: [orderId], references: [id])
+  variantId       String
+  variant         ProductVariant @relation(fields: [variantId], references: [id])
+  productNameAr   String         // Immutable order-time snapshot.
+  skuSnapshot     String
+  quantityItems   Int
+  eachBase        Decimal        @db.Decimal(14, 3)
+  unitPriceSar    Decimal        @db.Decimal(14, 2)
+  totalPriceSar   Decimal        @db.Decimal(14, 2)
+  cogsSar         Decimal?       @db.Decimal(14, 2) // Final cost basis after allocation.
+}
+
+model Payment {
+  id             String        @id @default(cuid())
+  orderId        String
+  order          Order         @relation(fields: [orderId], references: [id])
+  provider       String
+  providerTxnId  String?       @unique
+  idempotencyKey String        @unique
+  state          PaymentState  @default(PENDING)
+  amountSar      Decimal       @db.Decimal(14, 2)
+  paidAt         DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model Shipment {
+  id            String        @id @default(cuid())
+  orderId       String
+  order         Order         @relation(fields: [orderId], references: [id])
+  carrier       String?
+  trackingCode  String?
+  state         ShipmentState @default(NOT_CREATED)
+  carrierCostSar Decimal?      @db.Decimal(14, 2)
+  shippedAt     DateTime?
+  deliveredAt   DateTime?
+  createdAt     DateTime      @default(now())
+}
+
+model OperatingExpense {
+  id          String   @id @default(cuid())
+  category    String
+  description String?
+  amountSar   Decimal  @db.Decimal(14, 2)
+  occurredAt  DateTime
+  receiptUrl  String?
+  createdAt   DateTime @default(now())
+}
+
+model CapitalContribution {
+  id          String   @id @default(cuid())
+  description String?
+  amountSar   Decimal  @db.Decimal(14, 2)
+  occurredAt  DateTime
+  createdAt   DateTime @default(now())
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String
+  actor      User     @relation(fields: [actorId], references: [id])
+  event      String
+  entityType String
+  entityId   String
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId, createdAt])
+}
+
+model SiteSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
