@@ -47,3 +47,27 @@ export async function uploadAdminProductImage(token:string,productId:string,file
   if (!res.ok) throw new Error(data?.error||`HTTP ${res.status}`);
   return data as {id:string;url:string};
 }
+
+
+export type Customer = {id:string;name:string;email:string};
+export function customerStatus() {
+  return request<{emailAvailable:boolean}>('/customer/status');
+}
+export function customerRegister(data:{name:string;email:string;password:string}) {
+  return request<{message:string}>('/customer/register',{method:'POST',body:JSON.stringify(data)});
+}
+export function customerLogin(data:{email:string;password:string}) {
+  return request<{token:string;user:Customer}>('/customer/login',{method:'POST',body:JSON.stringify(data)});
+}
+export function customerForgot(email:string) {
+  return request<{message:string}>('/customer/forgot-password',{method:'POST',body:JSON.stringify({email})});
+}
+export function customerVerify(token:string) {
+  return request<{message:string}>('/customer/verify-email',{method:'POST',body:JSON.stringify({token})});
+}
+export function customerReset(token:string,password:string) {
+  return request<{message:string}>('/customer/reset-password',{method:'POST',body:JSON.stringify({token,password})});
+}
+export function customerMe(token:string) {
+  return request<{user:Customer}>('/customer/me',{headers:{Authorization:`Bearer ${token}`}});
+}
