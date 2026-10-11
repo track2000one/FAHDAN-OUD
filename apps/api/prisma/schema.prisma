@@ -73,6 +73,7 @@ enum ReservationState {
 }
 
 enum OrderState {
+  AWAITING_REVIEW
   PENDING_PAYMENT
   PAID
   PREPARING
@@ -318,6 +319,7 @@ model StockReservation {
 model Order {
   id                String             @id @default(cuid())
   orderNumber       String             @unique
+  checkoutRequestKey String?           @unique
   customerId        String?
   customer          User?              @relation(fields: [customerId], references: [id])
   guestName         String?
