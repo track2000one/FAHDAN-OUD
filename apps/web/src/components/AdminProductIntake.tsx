@@ -84,7 +84,10 @@ export function AdminProductIntake({token,revision,onUpdated}:{
     {notice&&<p className="fahdan-intake-alert success" role="status"><CheckCircle2 size={18}/>{notice}</p>}
     {error&&<p className="fahdan-intake-alert warning" role="alert"><CircleAlert size={18}/>{error}</p>}
     {created&&<div className="fahdan-intake-next">
-      <ImagePlus size={19}/><span>تم إنشاء «{created.name}». انتقل إلى <b>مكتبة صور المنتجات — Google Drive</b> أدناه، وارفع الصورة، ثم انشر الصنف من قائمة المنتجات هنا.</span>
+      <ImagePlus size={19}/><span>تم إنشاء «{created.name}». يمكنك رفع عدة صور له إلى Google Drive، ثم نشره من قائمة المنتجات هنا.</span>
+      <button type="button" className="fahdan-intake-upload-link" onClick={()=>
+        document.getElementById('fahdan-product-images')?.scrollIntoView({behavior:'smooth',block:'start'})
+      }><ImagePlus size={17}/> رفع صور المنتج</button>
     </div>}
     <form className="fahdan-intake-form" onSubmit={submit}>
       <fieldset><legend>1. بيانات المنتج</legend>

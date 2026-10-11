@@ -111,14 +111,33 @@ function Home({products,categories,connected}:{products:Product[];categories:{sl
   </>;
 }
 function ProductPage({products,add}:{products:Product[];add:(p:Product,v:Variant)=>boolean}) {
-  const {slug}=useParams();const p=products.find(p=>p.slug===slug);const [variantId,setVariantId]=useState('');const [added,setAdded]=useState(false);
-  useEffect(()=>{setVariantId(p?.variants.find(v=>v.quantityBase===28)?.id||p?.variants[0]?.id||'');setAdded(false);},[p?.id]);
+  const {slug}=useParams();const p=products.find(p=>p.slug===slug);const [variantId,setVariantId]=useState('');const [added,setAdded]=useState(false);const [imageIndex,setImageIndex]=useState(0);
+  useEffect(()=>{setVariantId(p?.variants.find(v=>v.quantityBase===28)?.id||p?.variants[0]?.id||'');setAdded(false);setImageIndex(0);},[p?.id]);
   if(!p)return <main className="container missing"><h1>المنتج غير موجود</h1><Link className="button dark" to="/">العودة إلى المتجر <ArrowRight size={17}/></Link></main>;
   const variant=p.variants.find(v=>v.id===variantId)||p.variants[0];
   const totalStock=p.availableBase;
   const available=!!variant&&(p.preorder||totalStock>=variant.quantityBase);
   return <main className="container detail-page"><nav className="breadcrumb"><Link to="/">الرئيسية</Link><span>/</span><Link to="/#products">المنتجات</Link><span>/</span><b>{p.name}</b></nav>
-    <div className="detail-grid"><div className={`detail-visual kind-${p.kind.toLowerCase()}`}><div className="detail-stamp">{p.demo?'منتج تجريبي':'من تشكيلة فهدان'}</div>{p.images[0]?<img className="real-product-image" src={p.images[0].url} alt={p.images[0].altAr||p.name}/>:<ProductArt kind={p.kind}/>}<div className="detail-media-note">{p.images.length?'صور المنتج':'رسوم توضيحية وليست صورًا حقيقية للمنتج'}</div></div>
+    <div className="detail-grid"><div className="detail-media-column">
+      <div className={`detail-visual kind-${p.kind.toLowerCase()}`}>
+        <div className="detail-stamp">{p.demo?'منتج تجريبي':'من تشكيلة فهدان'}</div>
+        {p.images.length
+          ? <img className="real-product-image" src={p.images[imageIndex]?.url||p.images[0].url}
+              alt={(p.images[imageIndex]?.altAr||p.name)+' — صورة '+(imageIndex+1)}/>
+          : <ProductArt kind={p.kind}/>}
+        <div className="detail-media-note">{p.images.length
+          ? `الصورة ${Math.min(imageIndex+1,p.images.length)} من ${p.images.length}`
+          : 'رسوم توضيحية وليست صورًا حقيقية للمنتج'}</div>
+      </div>
+      {p.images.length>1&&<div className="detail-gallery" aria-label="صور المنتج">
+        {p.images.map((photo,i)=><button key={photo.url} type="button"
+          className={i===imageIndex?'active':''}
+          aria-label={`عرض صورة المنتج رقم ${i+1}`}
+          aria-pressed={i===imageIndex} onClick={()=>setImageIndex(i)}>
+          <img src={photo.url} loading="lazy" alt={photo.altAr||`صورة ${i+1}`}/>
+        </button>)}
+      </div>}
+    </div>
       <div className="detail-copy"><div className="section-kicker">{p.category.nameAr}</div><h1>{p.name}</h1><p className="detail-desc">{p.description||'سيتم إضافة وصف المنتج عند اعتماد بياناته.'}</p>
         <div className="detail-tags"><span>المنشأ: {p.origin||'غير محدد'}</span><span>الدرجة: {p.grade||'غير محددة'}</span><span>{p.kind==='TREATED_OUD'?'مسقّى':'معلومات الصنف'}</span></div>
         <div className="scent"><b>وصف الرائحة</b><p>{p.scent||'سيضاف بعد اختبار واعتماد الصنف.'}</p></div>
