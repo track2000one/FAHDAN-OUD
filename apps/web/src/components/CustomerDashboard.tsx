@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { ArrowLeft, ChevronLeft, CheckCircle2, Clock3, Edit3, Home, LogOut, Mail, MapPin, Package, Plus, Save, ShieldCheck, Trash2, Truck, UserRound, X } from 'lucide-react';
 import {
   createCustomerAddress, defaultCustomerAddress, deleteCustomerAddress,
@@ -26,10 +26,9 @@ const shipmentNames:Record<string,string>={
   IN_TRANSIT:'في الطريق',DELIVERED:'تم التسليم',RETURNED:'مرتجعة'
 };
 
-export function CustomerDashboard({customer,onProfileUpdated,onLogout}:{
-  customer:Customer|null;onProfileUpdated:(updated:Customer)=>void;onLogout:()=>void
+export function CustomerDashboard({onProfileUpdated,onLogout}:{
+  onProfileUpdated:(updated:Customer)=>void;onLogout:()=>void
 }) {
-  const navigate=useNavigate();
   const [tab,setTab]=useState<Tab>('overview');
   const [profile,setProfile]=useState<AccountProfile|null>(null);
   const [addresses,setAddresses]=useState<CustomerAddress[]>([]);
