@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { Link, Route, Routes, useNavigate, useParams } from 'react-router-dom';
+import { Link, Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, BadgeCheck, Box, Check, ChevronDown, Gift, LayoutDashboard, LockKeyhole, Menu, Minus, Plus, Search, ShieldCheck, ShoppingBag, Sparkles, UserRound, X } from 'lucide-react';
 import { customerMe, getCatalog, getDashboard, signIn, type Customer } from './api';
 import { ProductArt } from './components/ProductArt';
@@ -31,7 +31,7 @@ function Header({cartCount,openCart,customer,onLogout}:{cartCount:number;openCar
         <Link onClick={()=>setMenu(false)} to="/">الرئيسية</Link>
         <Link onClick={()=>setMenu(false)} to="/#products">تشكيلة فهدان</Link>
         <Link onClick={()=>setMenu(false)} to="/#our-story">عن فهدان</Link>
-        <Link onClick={()=>setMenu(false)} to="/admin">لوحة الإدارة</Link>
+        <Link onClick={()=>setMenu(false)} to="/account">حسابي</Link>
       </nav>
       <div className="header-tools">
         <button className="bag-button" aria-label={`فتح السلة: ${cartCount} منتجات`} onClick={openCart}><ShoppingBag size={21}/>{cartCount>0&&<span className="bag-count">{cartCount}</span>}</button>
@@ -148,36 +148,44 @@ function Admin() {
     <AdminWarehouse token={token}/>
   </main>;
 }
-function Footer(){return <footer className="footer"><div className="container footer-main"><div><Brand inverse/><p>تجربة عصرية تنطلق من أصالة العود والبخور، وتمنح التفاصيل مكانتها.</p></div><div><h3>تصفح فهدان</h3><Link to="/">الرئيسية</Link><Link to="/#products">المنتجات</Link><Link to="/account">حسابي</Link><Link to="/admin">لوحة الإدارة</Link></div><div><h3>معلومات المتجر</h3><span>التواصل: يحدد لاحقًا</span><span>الشحن: تحت الإعداد</span><span>الدفع: غير مفعل</span></div><div className="footer-letter"><span>FAHDAN</span><strong>للطيب حكاية</strong></div></div><div className="footer-bottom container"><span>© فهدان للعود — نسخة تطويرية 2026</span><span>بُنيت بعناية لتكبر مع فهدان</span></div></footer>}
+function Footer(){return <footer className="footer"><div className="container footer-main"><div><Brand inverse/><p>تجربة عصرية تنطلق من أصالة العود والبخور، وتمنح التفاصيل مكانتها.</p></div><div><h3>تصفح فهدان</h3><Link to="/">الرئيسية</Link><Link to="/#products">المنتجات</Link><Link to="/account">حسابي</Link></div><div><h3>معلومات المتجر</h3><span>التواصل: يحدد لاحقًا</span><span>الشحن: تحت الإعداد</span><span>الدفع: غير مفعل</span></div><div className="footer-letter"><span>FAHDAN</span><strong>للطيب حكاية</strong></div></div><div className="footer-bottom container"><span>© فهدان للعود — نسخة تطويرية 2026</span><span>بُنيت بعناية لتكبر مع فهدان</span></div></footer>}
 export default function App(){
   const [products,setProducts]=useState<Product[]>(demoProducts),[categories,setCategories]=useState(fallbackCategories),[connected,setConnected]=useState(false);
   const [cart,setCart]=useState<CartLine[]>(readCart),[cartOpen,setCartOpen]=useState(false),[toast,setToast]=useState('');
   const [customer,setCustomer] = useState<Customer|null>(null);
+  const [customerLoading,setCustomerLoading] = useState(()=>Boolean(sessionStorage.getItem(CUSTOMER_SESSION_KEY)));
   const navigate=useNavigate();
   useEffect(()=>{let live=true;getCatalog().then(data=>{if(live){setProducts(data.products);setCategories(data.categories);setConnected(data.connected);}});return()=>{live=false;};},[]);
   useEffect(()=>{localStorage.setItem('fahdan-cart',JSON.stringify(cart));},[cart]);
   useEffect(()=>{
     const session=sessionStorage.getItem(CUSTOMER_SESSION_KEY);
-    if(!session)return;
+    if(!session){setCustomerLoading(false);return;}
     let active=true;
     customerMe(session).then(({user})=>{
-      if(active && sessionStorage.getItem(CUSTOMER_SESSION_KEY)===session)setCustomer(user);
+      if(active && sessionStorage.getItem(CUSTOMER_SESSION_KEY)===session){
+        sessionStorage.removeItem('fahdan-admin-token');
+        setCustomer(user);
+      }
     }).catch(()=>{
       if(active && sessionStorage.getItem(CUSTOMER_SESSION_KEY)===session){
         sessionStorage.removeItem(CUSTOMER_SESSION_KEY);
         setCustomer(null);
       }
-    });
+    }).finally(()=>{if(active)setCustomerLoading(false);});
     return()=>{active=false;};
   },[]);
   const updateCustomer=(user:Customer)=>setCustomer(user);
   const signInCustomer=(user:Customer,token:string)=>{
+    // Customer and owner sessions must never coexist in this browser tab.
+    sessionStorage.removeItem('fahdan-admin-token');
     sessionStorage.setItem(CUSTOMER_SESSION_KEY,token);
     setCustomer(user);
+    setCustomerLoading(false);
   };
   const logoutCustomer=()=>{
     sessionStorage.removeItem(CUSTOMER_SESSION_KEY);
     setCustomer(null);
+    setCustomerLoading(false);
     navigate('/account/login');
   };
   useEffect(()=>{if(!toast)return;const t=setTimeout(()=>setToast(''),2500);return()=>clearTimeout(t);},[toast]);
@@ -203,6 +211,6 @@ export default function App(){
 <Route path="/account/forgot-password" element={<CustomerAccount view="forgot-password" customer={customer} onSignIn={signInCustomer} onSignOut={logoutCustomer}/>}/>
 <Route path="/account/reset-password" element={<CustomerAccount view="reset-password" customer={customer} onSignIn={signInCustomer} onSignOut={logoutCustomer}/>}/>
 <Route path="/account/verify" element={<CustomerAccount view="verify" customer={customer} onSignIn={signInCustomer} onSignOut={logoutCustomer}/>}/>
-<Route path="/account" element={<CustomerDashboard onProfileUpdated={updateCustomer} onLogout={logoutCustomer}/>}/>
-<Route path="/admin" element={<Admin/>}/><Route path="*" element={<main className="container missing"><h1>الصفحة غير موجودة</h1><button className="button dark" onClick={()=>navigate('/')}>العودة للرئيسية</button></main>}/></Routes><Footer/><CartDrawer cart={cart} visible={cartOpen} close={()=>setCartOpen(false)} change={change} remove={sku=>setCart(prev=>prev.filter(x=>x.sku!==sku))}/>{toast&&<div className="toast" role="status"><Check size={17}/>{toast}</div>}</div>;
+<Route path="/account" element={customerLoading?<main className="container account-loading">جارٍ التحقق من جلسة حسابك…</main>:customer?<CustomerDashboard onProfileUpdated={updateCustomer} onLogout={logoutCustomer}/>:<Navigate to="/account/login" replace/>}/>
+<Route path="/admin" element={customerLoading?<main className="container account-loading">جارٍ التحقق من صلاحية الجلسة…</main>:customer?<Navigate to="/account" replace/>:<Admin/>}/><Route path="*" element={<main className="container missing"><h1>الصفحة غير موجودة</h1><button className="button dark" onClick={()=>navigate('/')}>العودة للرئيسية</button></main>}/></Routes><Footer/><CartDrawer cart={cart} visible={cartOpen} close={()=>setCartOpen(false)} change={change} remove={sku=>setCart(prev=>prev.filter(x=>x.sku!==sku))}/>{toast&&<div className="toast" role="status"><Check size={17}/>{toast}</div>}</div>;
 }
