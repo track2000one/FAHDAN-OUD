@@ -217,3 +217,56 @@
 .account-order-delivery a{font-size:12px;text-decoration:underline;text-underline-offset:3px;color:#27704a}
 .account-order-delivery small{font-size:12px;color:#94764c}
 @media(max-width:600px){.admin-shipping-card{padding:14px}.admin-shipping-toolbar{flex-wrap:wrap}.admin-shipping-toolbar input{max-width:100%}.admin-shipping-card-top{gap:10px}.admin-shipping-actions{flex-direction:column;align-items:stretch}.admin-shipping-actions>a,.admin-shipping-actions>button{justify-content:center}}
+
+
+/* Fahdan early checkout — transparent preliminary order review (no online charge) */
+.fahdan-checkout{padding-top:42px;padding-bottom:90px;min-height:600px}
+.fahdan-checkout-heading{margin-bottom:32px}
+.fahdan-checkout-heading h1{font-size:clamp(27px,3vw,39px);margin:10px 0;color:#20382c}
+.fahdan-checkout-heading>p{font-size:14px;color:#66786c;line-height:1.9}
+.fahdan-checkout-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(290px,360px);gap:23px;align-items:start}
+.fahdan-checkout-details{display:grid;gap:19px;min-width:0}
+.fahdan-checkout-panel,.fahdan-checkout-summary,.fahdan-checkout-empty{
+  border:1px solid #e6e2d8;border-radius:17px;background:#fffdf9;padding:clamp(18px,3vw,28px);
+  box-shadow:0 12px 35px #1e30270b;
+}
+.fahdan-checkout-panel h2,.fahdan-checkout-summary h2{font-size:19px;display:flex;gap:9px;align-items:center;margin:0 0 23px;color:#284332}
+.fahdan-checkout-panel h2 svg,.fahdan-checkout-summary h2 svg{color:#b79663}
+.fahdan-checkout-line{display:flex;justify-content:space-between;gap:15px;border-top:1px solid #eae7df;padding:15px 0;align-items:center}
+.fahdan-checkout-line>div{display:grid;gap:8px}.fahdan-checkout-line strong{font-size:14px;color:#263e30}
+.fahdan-checkout-line span{font-size:12px;color:#7a8277}
+.fahdan-checkout-line>b{font-size:13px;white-space:nowrap;color:#2a4634}
+.fahdan-checkout-return{display:inline-block;color:#396b4c;font-size:12px;text-decoration:underline;text-underline-offset:4px;margin-top:14px}
+.fahdan-checkout-addresses{display:grid;gap:12px}
+.fahdan-checkout-addresses label{display:flex;align-items:flex-start;gap:12px;padding:16px;border:1px solid #e5e4dc;border-radius:12px;cursor:pointer}
+.fahdan-checkout-addresses label.selected{background:#f1f5ef;border-color:#9db29f}
+.fahdan-checkout-addresses input{width:17px;height:17px;margin-top:2px;accent-color:#284d35}
+.fahdan-checkout-addresses label>span{display:grid;gap:7px}
+.fahdan-checkout-addresses strong{font-size:14px}.fahdan-checkout-addresses small{font-size:12px;color:#718072;line-height:1.8}
+.fahdan-checkout-addresses em{color:#347746;font-size:11px;font-style:normal}
+.fahdan-checkout-location-ok{display:flex;flex-wrap:wrap;align-items:center;gap:9px;background:#eaf5eb;color:#286b3d;border-radius:10px;padding:13px;margin-top:16px;font-size:12px}
+.fahdan-checkout-location-ok a{color:#22603a;text-decoration:underline}
+.fahdan-checkout-no-address{color:#697768;font-size:13px;line-height:1.9}
+.fahdan-checkout-no-address a{display:flex;align-items:center;gap:7px;color:#295e3c;font-weight:700;margin-top:14px}
+.fahdan-checkout-warning{display:flex;align-items:flex-start;gap:7px;background:#fef3e8;border:1px solid #f0dbc5;color:#875127;padding:12px 13px;border-radius:10px;font-size:12px;line-height:1.8}
+.fahdan-checkout-warning svg{flex-shrink:0}
+.fahdan-checkout-summary{position:sticky;top:18px}
+.fahdan-checkout-total{display:flex;gap:12px;justify-content:space-between;align-items:center;padding:13px 0;border-top:1px solid #e9e7e0;font-size:13px}
+.fahdan-checkout-total strong{font-size:20px;color:#203a2d}.fahdan-checkout-total b{font-size:12px;color:#7d6a50}
+.fahdan-checkout-note{font-size:12px;color:#687668;line-height:1.9;background:#f6f6ee;padding:13px;border-radius:9px}
+.fahdan-checkout-consent{display:flex;gap:10px;align-items:flex-start;line-height:1.9;font-size:12px;color:#48594b;padding:14px 0}
+.fahdan-checkout-consent input{margin-top:5px;width:16px;height:16px;accent-color:#22452f}
+.fahdan-checkout-summary>.button{display:flex;gap:9px;justify-content:center}
+.fahdan-checkout-summary>.button:disabled{opacity:.55;cursor:not-allowed}
+.fahdan-checkout-security{display:flex;gap:8px;align-items:center;line-height:1.7;color:#758175;font-size:11px;margin-top:18px}
+.fahdan-checkout-empty{text-align:center;padding:55px 22px}.fahdan-checkout-empty svg{color:#b59869}
+.fahdan-checkout-empty h2{font-size:22px;margin:15px 0 23px}
+.fahdan-checkout-success{display:flex;align-items:center;flex-direction:column;text-align:center;gap:16px;padding-top:90px;padding-bottom:110px;min-height:490px}
+.fahdan-checkout-success>svg{color:#3e9056}
+.fahdan-checkout-success h1{font-size:31px;color:#24452f;margin:4px 0}
+.fahdan-checkout-success p{max-width:580px;color:#607562;font-size:14px;line-height:1.9;margin:0}
+.fahdan-checkout-success p>strong{font-size:19px;color:#243e31}
+.fahdan-checkout-actions{display:flex;gap:15px;align-items:center;flex-wrap:wrap;justify-content:center;margin-top:20px}
+.fahdan-checkout-actions>a:not(.button){font-size:13px;color:#487155}
+@media(max-width:850px){.fahdan-checkout-layout{grid-template-columns:1fr}.fahdan-checkout-summary{position:static}}
+@media(max-width:520px){.fahdan-checkout{padding-top:20px}.fahdan-checkout-heading h1{font-size:26px}.fahdan-checkout-line{align-items:flex-start}.fahdan-checkout-line b{font-size:11px}}
