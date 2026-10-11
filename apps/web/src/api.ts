@@ -76,11 +76,13 @@ export function customerMe(token:string) {
 export type AccountProfile = Customer & {phone:string|null;emailVerifiedAt:string|null;createdAt:string};
 export type CustomerAddress = {
   id:string;label:string;recipientName:string;phone:string;city:string;district:string;
-  street:string;building:string|null;postalCode:string|null;additionalNumber:string|null;isDefault:boolean
+  street:string;building:string|null;postalCode:string|null;additionalNumber:string|null;isDefault:boolean;
+  latitude:number|null;longitude:number|null
 };
 export type CustomerAddressInput = {
   label:string;recipientName:string;phone:string;city:string;district:string;
-  street:string;building:string;postalCode:string;additionalNumber:string;isDefault:boolean
+  street:string;building:string;postalCode:string;additionalNumber:string;isDefault:boolean;
+  latitude:number|null;longitude:number|null
 };
 export type CustomerOrder = {
   id:string;orderNumber:string;state:string;totalSar:string;createdAt:string;
