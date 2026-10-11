@@ -132,6 +132,8 @@ model CustomerAddress {
   postalCode       String?
   additionalNumber String?
   isDefault        Boolean  @default(false)
+  latitude         Float?
+  longitude        Float?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 

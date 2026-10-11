@@ -9,6 +9,19 @@
     "typecheck": "tsc --noEmit",
     "preview": "vite preview"
   },
-  "dependencies": { "react": "^19.1.1", "react-dom": "^19.1.1", "react-router-dom": "^7.6.3", "lucide-react": "^0.468.0" },
-  "devDependencies": { "@types/react": "^19.1.0", "@types/react-dom": "^19.1.0", "@vitejs/plugin-react": "^4.7.0", "vite": "^6.3.5", "typescript": "~5.9.3" }
+  "dependencies": {
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "react-router-dom": "^7.6.3",
+    "lucide-react": "^0.468.0",
+    "leaflet": "^1.9.4"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^4.7.0",
+    "vite": "^6.3.5",
+    "typescript": "~5.9.3",
+    "@types/leaflet": "^1.9.20"
+  }
 }

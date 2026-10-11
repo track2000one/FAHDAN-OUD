@@ -38,11 +38,16 @@ const addressSchema=z.object({
   building:z.string().trim().max(50).default(''),
   postalCode:z.string().trim().max(12).default(''),
   additionalNumber:z.string().trim().max(15).default(''),
-  isDefault:z.boolean().default(false)
+  isDefault:z.boolean().default(false),
+  latitude:z.number().finite().min(-90).max(90).nullable().default(null),
+  longitude:z.number().finite().min(-180).max(180).nullable().default(null)
+}).refine(value=>(value.latitude===null)===(value.longitude===null),{
+  message:'حدد إحداثيات الموقع كاملة أو اترك الخريطة دون اختيار.'
 });
 const addressId=z.string().min(1).max(64);
 const addressFields={id:true,label:true,recipientName:true,phone:true,city:true,district:true,
-  street:true,building:true,postalCode:true,additionalNumber:true,isDefault:true} as const;
+  street:true,building:true,postalCode:true,additionalNumber:true,isDefault:true,
+  latitude:true,longitude:true} as const;
 
 accountRouter.get('/profile',async(_req,res,next)=>{
   try {

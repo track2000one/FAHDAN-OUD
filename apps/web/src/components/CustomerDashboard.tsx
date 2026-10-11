@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
+import { AddressMap } from './AddressMap';
 import { ArrowLeft, ChevronLeft, CheckCircle2, Clock3, Edit3, Home, LogOut, Mail, MapPin, Package, Plus, Save, ShieldCheck, Trash2, Truck, UserRound, X } from 'lucide-react';
 import {
   createCustomerAddress, defaultCustomerAddress, deleteCustomerAddress,
@@ -12,7 +13,8 @@ type Tab = 'overview'|'profile'|'addresses'|'orders';
 const SESSION_KEY='fahdan-customer-session';
 const emptyAddress:CustomerAddressInput={
   label:'المنزل',recipientName:'',phone:'',city:'',district:'',street:'',
-  building:'',postalCode:'',additionalNumber:'',isDefault:false
+  building:'',postalCode:'',additionalNumber:'',isDefault:false,
+  latitude:null,longitude:null
 };
 const dateFormat=(value:string)=>new Intl.DateTimeFormat('ar-SA',{dateStyle:'medium'}).format(new Date(value));
 const currency=(s:string)=>new Intl.NumberFormat('ar-SA',{style:'currency',currency:'SAR'}).format(Number(s));
@@ -69,7 +71,8 @@ export function CustomerDashboard({onProfileUpdated,onLogout}:{
         label:address.label,recipientName:address.recipientName,phone:address.phone,city:address.city,
         district:address.district,street:address.street,building:address.building||'',
         postalCode:address.postalCode||'',additionalNumber:address.additionalNumber||'',
-        isDefault:address.isDefault
+        isDefault:address.isDefault,
+        latitude:address.latitude,longitude:address.longitude
       });
     } else {
       setEditingAddress(null);
@@ -205,6 +208,9 @@ export function CustomerDashboard({onProfileUpdated,onLogout}:{
                     onChange={e=>setAddressForm({...addressForm,[key]:e.target.value})}/></label>
                 )}
               </div>
+              <AddressMap latitude={addressForm.latitude} longitude={addressForm.longitude}
+                onChange={point=>setAddressForm(current=>current?{...current,
+                  latitude:point?.latitude??null,longitude:point?.longitude??null}:current)}/>
               <label className="account-checkbox"><input type="checkbox" checked={addressForm.isDefault}
                 onChange={e=>setAddressForm({...addressForm,isDefault:e.target.checked})}/> تعيين عنوان افتراضي للتوصيل</label>
               <div className="account-form-actions"><button disabled={saving} className="button dark"><Save size={17}/>{saving?'جارٍ الحفظ…':'حفظ العنوان'}</button>
@@ -216,6 +222,9 @@ export function CustomerDashboard({onProfileUpdated,onLogout}:{
                 <p>{address.city}، {address.district}، {address.street}</p>
                 {address.building&&<p>مبنى: {address.building}</p>}
                 <p dir="ltr" className="account-phone">{address.phone}</p>
+                {address.latitude!==null&&address.longitude!==null&&<a className="account-address-map-link"
+                  href={`https://www.openstreetmap.org/?mlat=${address.latitude}&mlon=${address.longitude}#map=17/${address.latitude}/${address.longitude}`}
+                  target="_blank" rel="noopener noreferrer"><MapPin size={15}/> عرض الموقع على الخريطة</a>}
                 <div className="account-address-actions">
                   <button onClick={()=>openAddress(address)} disabled={saving}><Edit3 size={15}/> تعديل</button>
                   {!address.isDefault&&<button onClick={()=>changeDefault(address.id)} disabled={saving}>جعله الافتراضي</button>}
