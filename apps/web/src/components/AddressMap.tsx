@@ -38,7 +38,7 @@ export function AddressMap({ latitude, longitude, onChange }: AddressMapProps) {
       style: STYLE_URL,
       center: hasSavedLocation ? [longitude!, latitude!] : START_CENTER,
       zoom: hasSavedLocation ? 16 : 5,
-      attributionControl: true,
+      attributionControl: { compact: false },
       maxZoom: 19,
       dragRotate: false,
       pitchWithRotate: false
