@@ -1,4 +1,4 @@
-import { randomBytes } from 'node:crypto';
+import { createHmac } from 'node:crypto';
 import { Router } from 'express';
 import { rateLimit } from 'express-rate-limit';
 import { Prisma } from '@prisma/client';
@@ -110,7 +110,11 @@ checkoutRouter.post('/request',rateLimit({
     if(!data.success){res.status(400).json({error:'تحقق من عنوان التسليم والسلة والموافقة على أن الطلب مبدئي وغير مدفوع.'});return;}
     const userId=res.locals.customerId as string;
     const {requestKey,addressId,items}=data.data;
-    const existing=await prisma.order.findUnique({where:{checkoutRequestKey:requestKey},
+    // An existing UNIQUE orderNumber guarantees idempotency without changing
+    // constraints on the production order table.
+    const orderNumber='FD-'+createHmac('sha256',process.env.JWT_SECRET!)
+      .update(userId+':'+requestKey).digest('hex').slice(0,20).toUpperCase();
+    const existing=await prisma.order.findUnique({where:{orderNumber},
       select:{customerId:true,orderNumber:true,state:true}});
     if(existing){
       if(existing.customerId!==userId){res.status(409).json({error:'تعذر تسجيل الطلب؛ حاول إعادة تحميل الصفحة.'});return;}
@@ -130,8 +134,7 @@ checkoutRouter.post('/request',rateLimit({
       const {lines,subtotal}=await calculate(tx,items);
       return tx.order.create({
         data:{
-          orderNumber:'FD-'+new Date().toISOString().slice(0,10).replaceAll('-','')+'-'+randomBytes(6).toString('hex').toUpperCase(),
-          checkoutRequestKey:requestKey,
+          orderNumber,
           customerId:userId,
           addressSnapshot:{
             recipientName:address.recipientName,phone:address.phone,
@@ -165,7 +168,10 @@ checkoutRouter.post('/request',rateLimit({
     // Unique request key can be raced by repeated clicks or network retries.
     if(e instanceof Prisma.PrismaClientKnownRequestError&&e.code==='P2002'&&
       typeof req.body?.requestKey==='string'){
-      const existing=await prisma.order.findUnique({where:{checkoutRequestKey:req.body.requestKey},
+      const userId=res.locals.customerId as string;
+      const orderNumber='FD-'+createHmac('sha256',process.env.JWT_SECRET!)
+        .update(userId+':'+req.body.requestKey).digest('hex').slice(0,20).toUpperCase();
+      const existing=await prisma.order.findUnique({where:{orderNumber},
         select:{customerId:true,orderNumber:true,state:true}});
       if(existing && existing.customerId===res.locals.customerId){
         res.json({orderNumber:existing.orderNumber,state:existing.state,duplicate:true});return;
