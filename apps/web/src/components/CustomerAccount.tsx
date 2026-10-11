@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, CheckCircle2, Eye, EyeOff, KeyRound, LockKeyhole, Mail, UserRound, ShieldCheck } from 'lucide-react';
-import { customerForgot, customerLogin, customerMe, customerRegister, customerReset, customerStatus, customerVerify } from '../api';
+import { customerForgot, customerLogin, customerRegister, customerReset, customerStatus, customerVerify, type Customer } from '../api';
 
 type View = 'login' | 'register' | 'forgot-password' | 'reset-password' | 'verify';
 const labels:Record<View,{title:string;description:string}> = {
@@ -11,9 +11,7 @@ const labels:Record<View,{title:string;description:string}> = {
   'reset-password':{title:'كلمة مرور جديدة',description:'أدخل كلمة مرور قوية لتحديث حسابك.'},
   verify:{title:'تأكيد البريد الإلكتروني',description:'اضغط لتفعيل حسابك عبر رابط التحقق الذي وصلك.'}
 };
-const SKEY='fahdan-customer-session';
-
-export function CustomerAccount({view}:{view:View}) {
+export function CustomerAccount({view,customer,onSignIn,onSignOut}:{view:View;customer:Customer|null;onSignIn:(customer:Customer,token:string)=>void;onSignOut:()=>void}) {
   const [params]=useSearchParams();
   const token=params.get('token')||'';
   const [email,setEmail]=useState('');
@@ -25,22 +23,12 @@ export function CustomerAccount({view}:{view:View}) {
   const [error,setError]=useState('');
   const [notice,setNotice]=useState('');
   const [mailReady,setMailReady]=useState<boolean|null>(null);
-  const [customer,setCustomer]=useState<{name:string;email:string}|null>(null);
-  const [session,setSession]=useState(()=>sessionStorage.getItem(SKEY)||'');
 
   useEffect(()=>{
     let live=true;
     customerStatus().then(v=>{if(live)setMailReady(v.emailAvailable);}).catch(()=>{if(live)setMailReady(false)});
     return()=>{live=false};
   },[]);
-  useEffect(()=>{
-    if(view!=='login'||!session)return;
-    let live=true;
-    customerMe(session).then(data=>{if(live)setCustomer(data.user);})
-      .catch(()=>{if(live){sessionStorage.removeItem(SKEY);setSession('');setCustomer(null);}});
-    return()=>{live=false};
-  },[view,session]);
-
   useEffect(()=>{setError('');setNotice('');setPassword('');setConfirm('');},[view,token]);
 
   async function submit(event:FormEvent<HTMLFormElement>) {
@@ -52,8 +40,7 @@ export function CustomerAccount({view}:{view:View}) {
         setNotice(response.message+' افحص البريد الوارد والبريد غير المرغوب فيه.');
       } else if(view==='login'){
         const response=await customerLogin({email,password});
-        sessionStorage.setItem(SKEY,response.token);
-        setSession(response.token);setCustomer(response.user);setNotice('تم تسجيل الدخول بنجاح.');
+        onSignIn(response.user,response.token);setNotice('تم تسجيل الدخول بنجاح.');
       } else if(view==='forgot-password'){
         const response=await customerForgot(email);
         setNotice(response.message+' افحص البريد الوارد والبريد غير المرغوب فيه.');
@@ -71,7 +58,7 @@ export function CustomerAccount({view}:{view:View}) {
     finally{setBusy(false);}
   }
 
-  const logout=()=>{sessionStorage.removeItem(SKEY);setSession('');setCustomer(null);setNotice('تم تسجيل الخروج.');};
+  const logout=()=>{onSignOut();setNotice('تم تسجيل الخروج.');};
   const needsMail=view==='register'||view==='forgot-password';
   const done=Boolean(notice);
   return <main className="container customer-auth-wrap">
