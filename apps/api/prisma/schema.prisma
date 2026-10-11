@@ -319,7 +319,6 @@ model StockReservation {
 model Order {
   id                String             @id @default(cuid())
   orderNumber       String             @unique
-  checkoutRequestKey String?           @unique
   customerId        String?
   customer          User?              @relation(fields: [customerId], references: [id])
   guestName         String?
