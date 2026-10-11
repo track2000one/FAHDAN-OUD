@@ -120,18 +120,29 @@ node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 `/account/forgot-password` لاستعادة كلمة المرور. رابط التفعيل والاستعادة يصل إلى بريد العميل
 ولا يمنحه صلاحيات إدارية. روابط التفعيل صالحة 24 ساعة، وروابط الاستعادة 30 دقيقة.
 
-### تفعيل إرسال البريد عبر Resend
+### تفعيل إرسال البريد عبر Brevo
 
-أنشئ حسابًا في https://resend.com، وأثبت ملكية نطاق إرسال خاص بالمتجر
-بإضافة سجلات DNS التي يحددها Resend. ثم أضف إلى خدمة FAHDAN-OUD في Railway:
+نعتمد Brevo لخدمة البريد الإلكتروني الخاص بإنشاء حسابات فهدان وتفعيلها واستعادة كلمة المرور.
+أنشئ حسابًا في https://www.brevo.com ثم أضف نطاق إرسال تملكه إلى
+Settings → Senders, Domains & Dedicated IPs → Domains، وأكمل توثيق DNS
+وفق السجلات التي تعرضها Brevo (التحقق من الدومين وتوقيع DKIM وإعداد DMARC).
+أنشئ عنوان مرسل Verified Sender من نفس النطاق، ثم أنشئ API Key من
+SMTP & API → API Keys. أضف إلى متغيرات خدمة FAHDAN-OUD في Railway:
 
-- `RESEND_API_KEY`: مفتاح الإرسال (سري، خاص بالخادم).
-- `MAIL_FROM`: قيمة مثل `فهدان للعود <no-reply@your-verified-domain.example>`.
-- `WEB_ORIGIN`: الرابط الفعلي للمتجر عبر HTTPS (موجود في Railway).
+- `BREVO_API_KEY`: مفتاح Brevo API (سرّي، لخادم Node.js فقط).
+- `BREVO_SENDER_EMAIL`: بريد مرسل موثّق في Brevo مثل `no-reply@your-verified-domain.example`.
+- `BREVO_SENDER_NAME`: `فهدان للعود` (اختياري؛ اسم مرسل الرسالة).
+- `WEB_ORIGIN`: الرابط النهائي للمتجر عبر HTTPS (موجود في Railway).
 
-لا تضع أي مفاتيح في كود React أو GitHub. قبل توفير القيم يعطل النظام
-التسجيل واستعادة كلمة المرور مع إبقاء عرض المتجر وتسجيل دخول الإدارة متاحين.
-لا يمكن استخدام بريد Google Drive OAuth لإرسال البريد دون صلاحيات بريد منفصلة.
+تستخدم الخوادم `POST https://api.brevo.com/v3/smtp/email` بوساطة ترويسة
+`api-key` وترسل `sender` و`to` و`subject` و`htmlContent`.
+لا تحتاج إلى مكتبة إضافية؛ يستعمل الخادم Node.js fetch.
+
+لا تضع مفتاح API في GitHub أو كود React ولا تشارك قيمته في صور شاشة.
+قبل ضبط مفتاح Brevo وعنوان المرسل يتعطل إنشاء الحساب واستعادة كلمة المرور
+مع بقاء تصفح المتجر وتسجيل دخول الإدارة متاحين. مجرد توفير المتغيرات
+لا يضمن التسليم قبل توثيق المرسل والتحقق من البريد الفعلي.
+لا تُستخدم صلاحية Google Drive OAuth لإرسال البريد.
 
 يُنشئ `prisma db push` جدول EmailActionToken ويضيف `User.emailVerifiedAt`
 اختياريًا دون تعديل كلمات مرور الحسابات الحالية. سجّل حسابًا تجريبيًا من بريد تملكه،
