@@ -114,7 +114,7 @@ export function AdminWarehouse({token,revision,onUpdated}:{token:string;revision
         {!products.length&&<p>لا توجد منتجات فعلية مسجلة بعد.</p>}
       </div>
     </div>
-    <div className="admin-panel" style={{marginTop:'1.5rem'}}>
+    <div id="fahdan-product-images" className="admin-panel" style={{marginTop:'1.5rem'}}>
       <div className="panel-heading">
         <h2><Images size={20}/> مكتبة صور المنتجات — Google Drive</h2>
         <span>{ready?'تم التفويض':'بانتظار الربط'}</span>
