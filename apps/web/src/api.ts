@@ -71,3 +71,54 @@ export function customerReset(token:string,password:string) {
 export function customerMe(token:string) {
   return request<{user:Customer}>('/customer/me',{headers:{Authorization:`Bearer ${token}`}});
 }
+
+
+export type AccountProfile = Customer & {phone:string|null;emailVerifiedAt:string|null;createdAt:string};
+export type CustomerAddress = {
+  id:string;label:string;recipientName:string;phone:string;city:string;district:string;
+  street:string;building:string|null;postalCode:string|null;additionalNumber:string|null;isDefault:boolean
+};
+export type CustomerAddressInput = {
+  label:string;recipientName:string;phone:string;city:string;district:string;
+  street:string;building:string;postalCode:string;additionalNumber:string;isDefault:boolean
+};
+export type CustomerOrder = {
+  id:string;orderNumber:string;state:string;totalSar:string;createdAt:string;
+  items:{id:string;productNameAr:string;quantityItems:number;unitPriceSar:string;totalPriceSar:string}[];
+  shipments:{state:string;carrier:string|null;trackingCode:string|null}[];
+};
+const customerHeaders=(token:string)=>({Authorization:`Bearer ${token}`});
+export function getAccountProfile(token:string) {
+  return request<{user:AccountProfile}>('/account/profile',{headers:customerHeaders(token)});
+}
+export function updateAccountProfile(token:string,data:{name:string;phone:string}) {
+  return request<{user:AccountProfile}>('/account/profile',{
+    method:'PATCH',headers:customerHeaders(token),body:JSON.stringify(data)
+  });
+}
+export function getCustomerAddresses(token:string) {
+  return request<{addresses:CustomerAddress[]}>('/account/addresses',{headers:customerHeaders(token)});
+}
+export function createCustomerAddress(token:string,address:CustomerAddressInput) {
+  return request<{address:CustomerAddress}>('/account/addresses',{
+    method:'POST',headers:customerHeaders(token),body:JSON.stringify(address)
+  });
+}
+export function updateCustomerAddress(token:string,id:string,address:CustomerAddressInput) {
+  return request<{address:CustomerAddress}>(`/account/addresses/${encodeURIComponent(id)}`,{
+    method:'PUT',headers:customerHeaders(token),body:JSON.stringify(address)
+  });
+}
+export function defaultCustomerAddress(token:string,id:string) {
+  return request<{message:string}>(`/account/addresses/${encodeURIComponent(id)}/default`,{
+    method:'POST',headers:customerHeaders(token)
+  });
+}
+export function deleteCustomerAddress(token:string,id:string) {
+  return request<{message:string}>(`/account/addresses/${encodeURIComponent(id)}`,{
+    method:'DELETE',headers:customerHeaders(token)
+  });
+}
+export function getCustomerOrders(token:string) {
+  return request<{orders:CustomerOrder[]}>('/account/orders',{headers:customerHeaders(token)});
+}

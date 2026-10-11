@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, CheckCircle2, Eye, EyeOff, KeyRound, LockKeyhole, Mail, UserRound, ShieldCheck } from 'lucide-react';
 import { customerForgot, customerLogin, customerRegister, customerReset, customerStatus, customerVerify, type Customer } from '../api';
 
@@ -12,6 +12,7 @@ const labels:Record<View,{title:string;description:string}> = {
   verify:{title:'تأكيد البريد الإلكتروني',description:'اضغط لتفعيل حسابك عبر رابط التحقق الذي وصلك.'}
 };
 export function CustomerAccount({view,customer,onSignIn,onSignOut}:{view:View;customer:Customer|null;onSignIn:(customer:Customer,token:string)=>void;onSignOut:()=>void}) {
+  const navigate=useNavigate();
   const [params]=useSearchParams();
   const token=params.get('token')||'';
   const [email,setEmail]=useState('');
@@ -40,7 +41,7 @@ export function CustomerAccount({view,customer,onSignIn,onSignOut}:{view:View;cu
         setNotice(response.message+' افحص البريد الوارد والبريد غير المرغوب فيه.');
       } else if(view==='login'){
         const response=await customerLogin({email,password});
-        onSignIn(response.user,response.token);setNotice('تم تسجيل الدخول بنجاح.');
+        onSignIn(response.user,response.token);navigate('/account',{replace:true});
       } else if(view==='forgot-password'){
         const response=await customerForgot(email);
         setNotice(response.message+' افحص البريد الوارد والبريد غير المرغوب فيه.');
@@ -71,7 +72,7 @@ export function CustomerAccount({view,customer,onSignIn,onSignOut}:{view:View;cu
       {customer&&view==='login'?<div className="customer-auth-profile">
         <p><strong>الاسم:</strong> {customer.name}</p><p><strong>البريد:</strong> {customer.email}</p>
         <p className="auth-message success"><CheckCircle2 size={19}/> بريدك الإلكتروني مؤكد.</p>
-        <div className="auth-actions"><Link className="button dark" to="/">العودة للمتجر <ArrowLeft size={17}/></Link>
+        <div className="auth-actions"><Link className="button dark" to="/account">فتح حسابي <ArrowLeft size={17}/></Link>
           <button className="button light" onClick={logout}>تسجيل الخروج</button></div>
       </div>:<>
         {needsMail&&mailReady===false&&<div className="auth-message warning" role="alert">خدمة إرسال الرسائل لم تُفعّل بعد. التسجيل واستعادة كلمة المرور غير متاحين مؤقتًا.</div>}

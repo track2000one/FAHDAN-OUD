@@ -113,7 +113,29 @@ model User {
   emailVerifiedAt DateTime?
   emailActions EmailActionToken[]
   orders       Order[]
+  addresses    CustomerAddress[]
   auditLogs    AuditLog[]
+}
+
+
+model CustomerAddress {
+  id               String   @id @default(cuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label            String
+  recipientName    String
+  phone            String
+  city             String
+  district         String
+  street           String
+  building         String?
+  postalCode       String?
+  additionalNumber String?
+  isDefault        Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([userId, createdAt])
 }
 
 model EmailActionToken {
