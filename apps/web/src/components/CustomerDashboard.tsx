@@ -1,6 +1,6 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { lazy, Suspense, useEffect, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { AddressMap } from './AddressMap';
+const AddressMap = lazy(() => import('./AddressMap').then(mod => ({ default: mod.AddressMap })));
 import { ArrowLeft, ChevronLeft, CheckCircle2, Clock3, Edit3, Home, LogOut, Mail, MapPin, Package, Plus, Save, ShieldCheck, Trash2, Truck, UserRound, X } from 'lucide-react';
 import {
   createCustomerAddress, defaultCustomerAddress, deleteCustomerAddress,
@@ -208,9 +208,11 @@ export function CustomerDashboard({onProfileUpdated,onLogout}:{
                     onChange={e=>setAddressForm({...addressForm,[key]:e.target.value})}/></label>
                 )}
               </div>
-              <AddressMap latitude={addressForm.latitude} longitude={addressForm.longitude}
-                onChange={point=>setAddressForm(current=>current?{...current,
-                  latitude:point?.latitude??null,longitude:point?.longitude??null}:current)}/>
+              <Suspense fallback={<div className="account-map-placeholder">جارٍ تحميل الخريطة التفاعلية…</div>}>
+                <AddressMap latitude={addressForm.latitude} longitude={addressForm.longitude}
+                  onChange={point=>setAddressForm(current=>current?{...current,
+                    latitude:point?.latitude??null,longitude:point?.longitude??null}:current)}/>
+              </Suspense>
               <label className="account-checkbox"><input type="checkbox" checked={addressForm.isDefault}
                 onChange={e=>setAddressForm({...addressForm,isDefault:e.target.checked})}/> تعيين عنوان افتراضي للتوصيل</label>
               <div className="account-form-actions"><button disabled={saving} className="button dark"><Save size={17}/>{saving?'جارٍ الحفظ…':'حفظ العنوان'}</button>
