@@ -7,6 +7,7 @@ import { AdminWarehouse } from './components/AdminWarehouse';
 import { AdminOrders } from './components/AdminOrders';
 import { CustomerAccount } from './components/CustomerAccount';
 import { CustomerDashboard } from './components/CustomerDashboard';
+import { CustomerCheckout } from './components/CustomerCheckout';
 import { demoProducts, fallbackCategories } from './demo';
 import type { CartLine, Dashboard, Product, Variant } from './types';
 
@@ -128,10 +129,11 @@ function ProductPage({products,add}:{products:Product[];add:(p:Product,v:Variant
       </div></div></main>;
 }
 function CartDrawer({cart,visible,close,change,remove}:{cart:CartLine[];visible:boolean;close:()=>void;change:(sku:string,diff:number)=>void;remove:(sku:string)=>void}) {
+  const navigate=useNavigate();
   const total=cart.reduce((a,b)=>a+b.price*b.quantity,0);
   return <><div className={`cart-overlay ${visible?'visible':''}`} onClick={close}/><aside className={`cart-drawer ${visible?'visible':''}`} role="dialog" aria-modal="true" aria-label="سلة التسوق" aria-hidden={!visible}><div className="cart-top"><h2>سلة فهدان <span>({whole(cart.reduce((s,c)=>s+c.quantity,0))})</span></h2><button onClick={close} aria-label="إغلاق السلة"><X/></button></div>
     <div className="cart-list">{!cart.length?<div className="empty-cart"><ShoppingBag size={47}/><h3>سلتك بانتظار الطيب</h3><p>تصفح الأصناف وأضف ما يعجبك.</p><button className="button dark" onClick={close}>متابعة التسوق <ArrowLeft size={16}/></button></div>:cart.map(c=><div className="cart-line" key={c.sku}><div className="cart-thumb"><ProductArt kind={c.baseUnit==='PIECE'?'GIFT_BOX':'NATURAL_OUD'}/></div><div className="cart-line-info"><b>{c.name}</b><small>{c.label}</small><strong>{sar(c.price*c.quantity)}</strong><div className="qty-bar"><button onClick={()=>change(c.sku,-1)} aria-label={`إنقاص ${c.name}`}><Minus size={14}/></button><span>{whole(c.quantity)}</span><button onClick={()=>change(c.sku,1)} aria-label={`زيادة ${c.name}`}><Plus size={14}/></button><button className="delete-item" onClick={()=>remove(c.sku)}>حذف</button></div></div></div>)}</div>
-    {!!cart.length&&<div className="cart-checkout"><div className="cart-subtotal"><b>المجموع التوضيحي</b><strong>{sar(total)}</strong></div><p>الشحن والضرائب لم تُحتسب بعد.</p><button disabled className="button dark block"><LockKeyhole size={17}/> إتمام الطلب غير مفعل</button><small>يُفعّل بعد تجهيز الطلبات والدفع والتحقق من المخزون على الخادم.</small></div>}
+    {!!cart.length&&<div className="cart-checkout"><div className="cart-subtotal"><b>المجموع التوضيحي</b><strong>{sar(total)}</strong></div><p>الشحن والضرائب لم تُحتسب بعد.</p><button className="button dark block" onClick={()=>{close();navigate("/checkout");}}><ArrowLeft size={17}/> مراجعة الطلب المبدئي</button><small>يمكن إرسال طلب مراجعة غير مدفوع، وتحدد رسوم الشحن والإجمالي النهائي لاحقًا.</small></div>}
   </aside></>;
 }
 function Admin() {
@@ -214,5 +216,6 @@ export default function App(){
 <Route path="/account/reset-password" element={<CustomerAccount view="reset-password" customer={customer} onSignIn={signInCustomer} onSignOut={logoutCustomer}/>}/>
 <Route path="/account/verify" element={<CustomerAccount view="verify" customer={customer} onSignIn={signInCustomer} onSignOut={logoutCustomer}/>}/>
 <Route path="/account" element={customerLoading?<main className="container account-loading">جارٍ التحقق من جلسة حسابك…</main>:customer?<CustomerDashboard onProfileUpdated={updateCustomer} onLogout={logoutCustomer}/>:<Navigate to="/account/login" replace/>}/>
+<Route path="/checkout" element={customerLoading?<main className="container account-loading">جارٍ التحقق من حسابك…</main>:customer?<CustomerCheckout cart={cart} products={products} onCompleted={()=>setCart([])}/>:<Navigate to="/account/login" replace/>}/>
 <Route path="/admin" element={customerLoading?<main className="container account-loading">جارٍ التحقق من صلاحية الجلسة…</main>:customer?<Navigate to="/account" replace/>:<Admin/>}/><Route path="*" element={<main className="container missing"><h1>الصفحة غير موجودة</h1><button className="button dark" onClick={()=>navigate('/')}>العودة للرئيسية</button></main>}/></Routes><Footer/><CartDrawer cart={cart} visible={cartOpen} close={()=>setCartOpen(false)} change={change} remove={sku=>setCart(prev=>prev.filter(x=>x.sku!==sku))}/>{toast&&<div className="toast" role="status"><Check size={17}/>{toast}</div>}</div>;
 }
