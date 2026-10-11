@@ -222,6 +222,9 @@ export function CustomerDashboard({onProfileUpdated,onLogout}:{
                 <p>{address.city}، {address.district}، {address.street}</p>
                 {address.building&&<p>مبنى: {address.building}</p>}
                 <p dir="ltr" className="account-phone">{address.phone}</p>
+                {address.latitude!==null&&address.longitude!==null&&<a className="account-address-map-link"
+                  href={`https://www.openstreetmap.org/?mlat=${address.latitude}&mlon=${address.longitude}#map=17/${address.latitude}/${address.longitude}`}
+                  target="_blank" rel="noopener noreferrer"><MapPin size={15}/> عرض الموقع على الخريطة</a>}
                 <div className="account-address-actions">
                   <button onClick={()=>openAddress(address)} disabled={saving}><Edit3 size={15}/> تعديل</button>
                   {!address.isDefault&&<button onClick={()=>changeDefault(address.id)} disabled={saving}>جعله الافتراضي</button>}
