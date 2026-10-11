@@ -37,3 +37,21 @@
 .auth-actions{display:flex;gap:12px;flex-wrap:wrap}
 @media(max-width:820px){.customer-auth-wrap{grid-template-columns:1fr;padding-top:30px;gap:0}.auth-decoration{order:2;border-radius:0 0 18px 18px;padding:22px 30px;min-height:120px}.auth-decoration h2{font-size:23px;margin:5px 0}.auth-decoration>p{display:none}.auth-seal{margin-top:9px;font-size:12px}.customer-auth-card{order:1;border-radius:18px 18px 0 0;padding:35px 26px}}
 @media(max-width:480px){.customer-auth-wrap{padding-top:16px;padding-bottom:40px;min-height:0}.customer-auth-card{padding:27px 18px}.auth-decoration{padding:17px 20px}.customer-auth-card h1{font-size:26px}.auth-navigation{line-height:1.9}}
+
+
+/* Signed-in customer identity in the Fahdan header */
+.header-customer-menu{position:relative;flex-shrink:0;z-index:40}
+.header-customer-menu>summary{display:flex;align-items:center;gap:9px;cursor:pointer;list-style:none;border:1px solid #e6e7dc;background:#f8f6f0;border-radius:30px;min-height:42px;padding:0 13px;color:#233e30;font-size:13px;font-weight:700;max-width:240px}
+.header-customer-menu>summary::-webkit-details-marker{display:none}
+.header-customer-menu>summary:hover,.header-customer-menu[open]>summary{background:#edf0e8;border-color:#ba9764}
+.header-customer-menu>summary:focus-visible{outline:2px solid #ba9764;outline-offset:3px}
+.header-customer-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:165px}
+.header-customer-popover{position:absolute;left:0;top:calc(100% + 12px);width:min(270px,calc(100vw - 30px));box-sizing:border-box;background:#fffefa;border:1px solid #e4ded2;border-radius:14px;box-shadow:0 18px 35px #17272124;padding:16px;display:flex;flex-direction:column;gap:9px;text-align:right;color:#172721}
+.header-customer-popover .header-customer-label{color:#9b7b4c;font-size:12px;font-weight:700}
+.header-customer-fullname{font-size:16px;overflow-wrap:anywhere}
+.header-customer-email{color:#6e7b72;font-size:12px;text-align:right;overflow-wrap:anywhere}
+.header-tools .header-customer-popover a,.header-tools .header-customer-popover button{box-sizing:border-box;display:flex;width:100%;height:auto;min-height:42px;position:static;place-items:unset;align-items:center;justify-content:flex-start;border-radius:9px;border:0;padding:11px 13px;background:#f4f4ef;color:#213d30;text-decoration:none;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.header-tools .header-customer-popover button{background:#f9edeb;color:#8b382b}
+.header-tools .header-customer-popover a:hover,.header-tools .header-customer-popover button:hover{filter:brightness(.96)}
+@media(max-width:800px){.header-tools .header-admin{display:grid!important}.header-customer-menu>summary{padding:0 9px;gap:5px;max-width:148px;min-height:37px;font-size:12px}.header-customer-name{max-width:85px}.header-customer-menu>summary svg:last-child{width:13px}.header-customer-popover{left:-42px}}
+@media(max-width:480px){.header-customer-menu>summary{max-width:124px;gap:4px;padding:0 7px}.header-customer-name{max-width:70px;font-size:11px}.header-customer-menu>summary svg:first-child{width:15px}.header-customer-menu>summary svg:last-child{width:12px}.header-customer-popover{left:-54px}.header-tools .header-admin{display:grid!important}}
