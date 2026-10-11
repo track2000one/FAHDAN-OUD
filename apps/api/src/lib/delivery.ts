@@ -1,4 +1,3 @@
-import type { CustomerAddress } from '@prisma/client';
 import { prisma } from './db.js';
 
 export type DeliverySnapshot = {
