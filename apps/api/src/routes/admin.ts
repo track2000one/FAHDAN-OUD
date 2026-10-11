@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { driveStatus, uploadImage, deleteImage, isImage } from '../lib/google-drive.js';
 import { prisma } from '../lib/db.js';
 import { requireOwner } from '../lib/auth.js';
+import { deliveryFromOrderSnapshot } from '../lib/delivery.js';
 
 export const adminRouter = Router();
 adminRouter.use(requireOwner);
@@ -77,4 +78,36 @@ adminRouter.post('/products/:productId/images', raw({ type: ['image/jpeg','image
       throw err;
     }
   } catch(err) {next(err);}
+});
+
+
+// Authenticated owner/administrator view only; never expose recipient details on public routes.
+adminRouter.get('/orders', async (_req, res, next) => {
+  try {
+    const orders = await prisma.order.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+      select: {
+        id: true, orderNumber: true, state: true, createdAt: true,
+        totalSar: true, addressSnapshot: true, guestName: true, guestPhone: true,
+        customer: { select: { name: true, email: true } },
+        items: { select: { id: true, productNameAr: true, quantityItems: true } },
+        shipments: { select: { id: true, state: true, carrier: true, trackingCode: true } }
+      }
+    });
+    res.setHeader('Cache-Control', 'no-store');
+    res.json({ orders: orders.map(order => ({
+      id: order.id,
+      orderNumber: order.orderNumber,
+      state: order.state,
+      createdAt: order.createdAt,
+      totalSar: order.totalSar.toString(),
+      customerName: order.customer?.name || order.guestName || 'عميل',
+      customerEmail: order.customer?.email || null,
+      guestPhone: order.guestPhone,
+      delivery: deliveryFromOrderSnapshot(order.addressSnapshot),
+      items: order.items,
+      shipments: order.shipments
+    })) });
+  } catch(e) { next(e); }
 });

@@ -84,8 +84,26 @@ export type CustomerAddressInput = {
   street:string;building:string;postalCode:string;additionalNumber:string;isDefault:boolean;
   latitude:number|null;longitude:number|null
 };
+export type DeliverySnapshot = {
+  recipientName:string;phone:string;city:string;district:string;street:string;
+  building:string|null;postalCode:string|null;additionalNumber:string|null;
+  latitude:number|null;longitude:number|null;
+};
+export type AdminOrder = {
+  id:string;orderNumber:string;state:string;createdAt:string;totalSar:string;
+  customerName:string;customerEmail:string|null;guestPhone:string|null;
+  delivery:DeliverySnapshot|null;
+  items:{id:string;productNameAr:string;quantityItems:number}[];
+  shipments:{id:string;state:string;carrier:string|null;trackingCode:string|null}[];
+};
+export function getAdminOrders(token:string) {
+  return request<{orders:AdminOrder[]}>('/admin/orders',{
+    headers:{Authorization:`Bearer ${token}`}
+  });
+}
 export type CustomerOrder = {
   id:string;orderNumber:string;state:string;totalSar:string;createdAt:string;
+  delivery:DeliverySnapshot|null;
   items:{id:string;productNameAr:string;quantityItems:number;unitPriceSar:string;totalPriceSar:string}[];
   shipments:{state:string;carrier:string|null;trackingCode:string|null}[];
 };

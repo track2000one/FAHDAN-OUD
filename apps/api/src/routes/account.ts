@@ -3,6 +3,7 @@ import jwt, { type JwtPayload } from 'jsonwebtoken';
 import { rateLimit } from 'express-rate-limit';
 import { z } from 'zod';
 import { prisma } from '../lib/db.js';
+import { deliveryFromOrderSnapshot } from '../lib/delivery.js';
 
 // All routes below require a verified CUSTOMER JWT. Admin and other roles are rejected.
 export const accountRouter = Router();
@@ -166,7 +167,7 @@ accountRouter.get('/orders',async(_req,res,next)=>{
       where:{customerId:res.locals.customerId},
       orderBy:{createdAt:'desc'},take:50,
       select:{
-        id:true,orderNumber:true,state:true,totalSar:true,createdAt:true,
+        id:true,orderNumber:true,state:true,totalSar:true,createdAt:true,addressSnapshot:true,
         items:{select:{id:true,productNameAr:true,quantityItems:true,unitPriceSar:true,totalPriceSar:true}},
         shipments:{select:{state:true,carrier:true,trackingCode:true}}
       }
@@ -174,7 +175,7 @@ accountRouter.get('/orders',async(_req,res,next)=>{
     // Never expose internal costs or other customers' orders.
     res.setHeader('Cache-Control','no-store');
     res.json({orders:orders.map(order=>({
-      ...order,totalSar:order.totalSar.toString(),
+      ...order,addressSnapshot:undefined,delivery:deliveryFromOrderSnapshot(order.addressSnapshot),totalSar:order.totalSar.toString(),
       items:order.items.map(item=>({...item,unitPriceSar:item.unitPriceSar.toString(),totalPriceSar:item.totalPriceSar.toString()}))
     }))});
   }catch(e){next(e);}
