@@ -25,6 +25,7 @@ export function CustomerCheckout({cart,products,onCompleted}:{
   const session=sessionStorage.getItem(SESSION_KEY);
 
   const signature=JSON.stringify(cart.map(item=>({sku:item.sku,quantity:item.quantity})));
+  useEffect(()=>{requestKey.current=crypto.randomUUID();},[signature]);
   const items=useMemo(()=>{
     const result:CheckoutCartItem[]=[];
     for(const line of cart){
@@ -144,7 +145,7 @@ export function CustomerCheckout({cart,products,onCompleted}:{
         </>}
         <label className="fahdan-checkout-consent">
           <input type="checkbox" checked={accepted} onChange={e=>setAccepted(e.target.checked)}/>
-          <span>أفهم أن هذا **طلب مبدئي للمراجعة**، ولا يشكّل دفعًا أو تأكيدًا للشحن أو حجزًا نهائيًا للمنتجات.</span>
+          <span>أفهم أن هذا طلب مبدئي للمراجعة، ولا يشكّل دفعًا أو تأكيدًا للشحن أو حجزًا نهائيًا للمنتجات.</span>
         </label>
         <button type="button" className="button dark block" onClick={sendRequest}
           disabled={loading||submitting||!items?.length||!quote||!locationReady||!accepted}>
