@@ -167,7 +167,7 @@ checkoutRouter.post('/request',rateLimit({
       typeof req.body?.requestKey==='string'){
       const existing=await prisma.order.findUnique({where:{checkoutRequestKey:req.body.requestKey},
         select:{customerId:true,orderNumber:true,state:true}});
-      if(existing?.customerId===res.locals.customerId){
+      if(existing && existing.customerId===res.locals.customerId){
         res.json({orderNumber:existing.orderNumber,state:existing.state,duplicate:true});return;
       }
     }
