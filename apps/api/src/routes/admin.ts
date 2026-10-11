@@ -1,5 +1,6 @@
 import { Router, raw } from 'express';
 import { randomUUID } from 'node:crypto';
+import { Prisma } from '@prisma/client';
 import { driveStatus, uploadImage, deleteImage, isImage } from '../lib/google-drive.js';
 import { prisma } from '../lib/db.js';
 import { requireOwner } from '../lib/auth.js';
@@ -64,18 +65,37 @@ adminRouter.post('/products/:productId/images', raw({ type: ['image/jpeg','image
     if (!Buffer.isBuffer(req.body) || !isImage(req.body, mime)) {
       res.status(400).json({error:'اختر صورة JPG أو PNG أو WEBP لا تتجاوز 6 ميجابايت.'}); return;
     }
-    const product = await prisma.product.findUnique({where:{id:req.params.productId},select:{id:true,nameAr:true}});
-    if (!product) {res.status(404).json({error:'المنتج غير موجود.'});return;}
+    const product = await prisma.product.findUnique({where:{id:req.params.productId},select:{id:true,nameAr:true,isDemo:true}});
+    if (!product || product.isDemo) {res.status(404).json({error:'المنتج الفعلي غير موجود.'});return;}
+    // Images are uploaded one at a time by the multi-select UI. Enforce the
+    // total count on the server, not just in the browser.
+    const existingCount = await prisma.productMedia.count({where:{productId:product.id,kind:'PHOTO'}});
+    if (existingCount>=12) {res.status(409).json({error:'الحد الأقصى 12 صورة لكل منتج.'});return;}
     const fileId = await uploadImage(req.body,mime);
     const mediaId = randomUUID();
     try {
-      const media = await prisma.productMedia.create({data:{
-        id:mediaId,productId:product.id,kind:'PHOTO',driveFileId:fileId,
-        url:`/api/v1/media/${mediaId}`,altAr:product.nameAr,sort:0
-      }});
-      res.status(201).json({id:media.id,url:media.url});
+      // A serializable transaction prevents concurrent uploads from silently
+      // exceeding the limit or sharing the same sort position.
+      const media = await prisma.$transaction(async tx => {
+        const photos = await tx.productMedia.findMany({
+          where:{productId:product.id,kind:'PHOTO'},select:{sort:true}
+        });
+        if (photos.length>=12) throw new Error('PHOTO_LIMIT_REACHED');
+        const sort = photos.reduce((max,photo)=>Math.max(max,photo.sort),-1)+1;
+        return tx.productMedia.create({data:{
+          id:mediaId,productId:product.id,kind:'PHOTO',driveFileId:fileId,
+          url:`/api/v1/media/${mediaId}`,altAr:product.nameAr,sort
+        }});
+      },{isolationLevel:Prisma.TransactionIsolationLevel.Serializable});
+      res.status(201).json({id:media.id,url:media.url,sort:media.sort});
     } catch (err) {
       try { await deleteImage(fileId); } catch { console.error('Google Drive cleanup after DB failure was unsuccessful.'); }
+      if(err instanceof Error && err.message==='PHOTO_LIMIT_REACHED') {
+        res.status(409).json({error:'الحد الأقصى 12 صورة لكل منتج.'});return;
+      }
+      if(err instanceof Prisma.PrismaClientKnownRequestError && err.code==='P2034'){
+        res.status(409).json({error:'جارٍ رفع صورة أخرى لهذا المنتج. أعد المحاولة.'});return;
+      }
       throw err;
     }
   } catch(err) {next(err);}
