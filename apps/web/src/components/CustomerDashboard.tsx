@@ -250,6 +250,14 @@ export function CustomerDashboard({onProfileUpdated,onLogout}:{
                   {order.items.map(item=><div className="account-order-item" key={item.id}>
                     <span>{item.productNameAr} × {item.quantityItems}</span><b>{currency(item.totalPriceSar)}</b>
                   </div>)}
+                  {order.delivery&&<div className="account-order-delivery">
+                    <strong><MapPin size={16}/> عنوان التسليم المحفوظ مع الطلب</strong>
+                    <p>{order.delivery.city}، {order.delivery.district}، {order.delivery.street}</p>
+                    {order.delivery.latitude!==null&&order.delivery.longitude!==null
+                      ? <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.delivery.latitude+','+order.delivery.longitude)}`}
+                          target="_blank" rel="noopener noreferrer">عرض موقع تسليم هذا الطلب على الخريطة</a>
+                      : <small>لم تُحفظ إحداثيات التوصيل لهذا الطلب.</small>}
+                  </div>}
                   {order.shipments.map((shipment,i)=><p key={i}><Truck size={16}/> {shipmentNames[shipment.state]||shipment.state}
                     {shipment.carrier?' — '+shipment.carrier:''}
                     {shipment.trackingCode?' — رقم التتبع: '+shipment.trackingCode:''}</p>)}
