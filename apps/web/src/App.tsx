@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { Link, Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom';
+import { Link, Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, BadgeCheck, Box, Check, ChevronDown, Gift, LayoutDashboard, LockKeyhole, Menu, Minus, Plus, Search, ShieldCheck, ShoppingBag, Sparkles, UserRound, X } from 'lucide-react';
 import { customerMe, getCatalog, getDashboard, signIn, type Customer } from './api';
 import { ProductArt } from './components/ProductArt';
 import { AdminWarehouse } from './components/AdminWarehouse';
+import { AdminProductIntake } from './components/AdminProductIntake';
 import { AdminOrders } from './components/AdminOrders';
 import { CustomerAccount } from './components/CustomerAccount';
 import { CustomerDashboard } from './components/CustomerDashboard';
@@ -141,14 +142,17 @@ function Admin() {
   const [email,setEmail]=useState('');const [password,setPassword]=useState('');
   const [error,setError]=useState('');const [busy,setBusy]=useState(false);
   const [dashboard,setDashboard]=useState<Dashboard|null>(null);
-  useEffect(()=>{if(!token){setDashboard(null);return;}let live=true;getDashboard(token).then(v=>{if(live)setDashboard(v);}).catch(()=>{if(live){setError('تعذر جلب لوحة الإدارة؛ تحقق من تشغيل API وقاعدة البيانات أو صلاحية الجلسة.');setToken('');sessionStorage.removeItem('fahdan-admin-token');}});return()=>{live=false;};},[token]);
+  const [revision,setRevision]=useState(0);
+  const refreshProducts=()=>setRevision(v=>v+1);
+  useEffect(()=>{if(!token){setDashboard(null);return;}let live=true;getDashboard(token).then(v=>{if(live)setDashboard(v);}).catch(()=>{if(live){setError('تعذر جلب لوحة الإدارة؛ تحقق من تشغيل API وقاعدة البيانات أو صلاحية الجلسة.');setToken('');sessionStorage.removeItem('fahdan-admin-token');}});return()=>{live=false;};},[token,revision]);
   const login=async(e:FormEvent<HTMLFormElement>)=>{e.preventDefault();setBusy(true);setError('');try{const data=await signIn(email,password);sessionStorage.setItem('fahdan-admin-token',data.token);setToken(data.token);setPassword('');}catch(err){setError(err instanceof Error?err.message:'تعذر تسجيل الدخول.');}finally{setBusy(false);}};
   const logout=()=>{sessionStorage.removeItem('fahdan-admin-token');setToken('');setDashboard(null);};
   if(!token)return <main className="admin-wrap container"><div className="admin-login"><div className="login-emblem"><LockKeyhole/></div><span className="section-kicker">إدارة فهدان</span><h1>دخول لوحة الإدارة</h1><p>بيانات الموردين والتكاليف المالية لا تظهر إلا لأصحاب الصلاحية.</p><form onSubmit={login}><label>البريد الإلكتروني<input type="email" autoComplete="username" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="owner@example.com"/></label><label>كلمة المرور<input type="password" autoComplete="current-password" required value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••••••••"/></label><button className="button dark block" disabled={busy}>{busy?'جارٍ التحقق...':'دخول الإدارة'} <ArrowLeft size={16}/></button></form>{error&&<p className="form-error" role="alert">{error}</p>}<small>يجب تشغيل PostgreSQL والخادم وإنشاء حساب المالك من إعدادات البيئة أولًا.</small></div></main>;
   return <main className="container admin-wrap"><div className="admin-heading"><div><span className="section-kicker">نظام فهدان الداخلي</span><h1><LayoutDashboard/> لوحة إدارة المتجر</h1><p>مؤشرات مرتبطة بقاعدة البيانات وليست أرقامًا تقديرية.</p></div><button className="button light" onClick={logout}>تسجيل الخروج <ArrowRight size={16}/></button></div>
     {!dashboard?<div className="admin-loading">جارٍ قراءة المؤشرات من قاعدة البيانات…</div>:<><div className="admin-stats"><div><span>المنتجات الفعلية</span><strong>{whole(dashboard.totalProducts)}</strong><small>لا تشمل منتجات العرض التجريبية</small></div><div><span>الطلبات قيد المتابعة</span><strong>{whole(dashboard.openOrders)}</strong><small>قبل الإرسال أو الإكمال</small></div><div><span>الطلبات المدفوعة</span><strong>{whole(dashboard.paidOrders)}</strong><small>بحسب الحالات المسجلة</small></div><div><span>إجمالي المبيعات المدفوعة*</span><strong>{sar(dashboard.grossSalesSar)}</strong><small>ليس صافي الربح</small></div></div>
       <div className="admin-panels"><div className="admin-panel"><div className="panel-heading"><h2>تنبيهات المخزون</h2><span>{whole(dashboard.lowStock.length)} أصناف</span></div>{dashboard.lowStock.length?dashboard.lowStock.map((item,i)=><p key={i} className="stock-warning"><Box size={17}/> {item.name} — المتاح {whole(item.available)} {item.unit==='PIECE'?'قطعة':'وحدة أساسية'} (الحد {whole(item.threshold)})</p>):<div className="panel-empty"><Check size={27}/> لا توجد تنبيهات مخزون في الأصناف الفعلية حاليًا.</div>}</div><div className="admin-panel"><div className="panel-heading"><h2>وحدات الإدارة القادمة</h2><Sparkles size={18}/></div><ul className="roadmap-list"><li><Check size={16}/> دليل المنتجات والأوزان</li><li><Check size={16}/> تسجيل الموردين ودفعات الشراء</li><li><Check size={16}/> حركة المخزون وحجز الكميات</li><li><Check size={16}/> الطلبات والشحن والمدفوعات</li><li><Check size={16}/> تقارير الأرباح والمديونيات</li></ul><p className="panel-disclaimer">النماذج مهيأة في قاعدة البيانات؛ شاشات الإدخال والمعالجة المحاسبية لم تُنفذ بعد.</p></div></div></>}
-    <AdminWarehouse token={token}/>
+    <AdminProductIntake token={token} revision={revision} onUpdated={refreshProducts}/>
+    <AdminWarehouse token={token} revision={revision} onUpdated={refreshProducts}/>
     <AdminOrders token={token}/>
   </main>;
 }
@@ -159,7 +163,8 @@ export default function App(){
   const [customer,setCustomer] = useState<Customer|null>(null);
   const [customerLoading,setCustomerLoading] = useState(()=>Boolean(sessionStorage.getItem(CUSTOMER_SESSION_KEY)));
   const navigate=useNavigate();
-  useEffect(()=>{let live=true;getCatalog().then(data=>{if(live){setProducts(data.products);setCategories(data.categories);setConnected(data.connected);}});return()=>{live=false;};},[]);
+  const location=useLocation();
+  useEffect(()=>{let live=true;getCatalog().then(data=>{if(live){setProducts(data.products);setCategories(data.categories);setConnected(data.connected);}});return()=>{live=false;};},[location.pathname]);
   useEffect(()=>{localStorage.setItem('fahdan-cart',JSON.stringify(cart));},[cart]);
   useEffect(()=>{
     const session=sessionStorage.getItem(CUSTOMER_SESSION_KEY);

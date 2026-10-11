@@ -270,3 +270,50 @@
 .fahdan-checkout-actions>a:not(.button){font-size:13px;color:#487155}
 @media(max-width:850px){.fahdan-checkout-layout{grid-template-columns:1fr}.fahdan-checkout-summary{position:static}}
 @media(max-width:520px){.fahdan-checkout{padding-top:20px}.fahdan-checkout-heading h1{font-size:26px}.fahdan-checkout-line{align-items:flex-start}.fahdan-checkout-line b{font-size:11px}}
+
+
+/* Product procurement and inventory — Fahdan administration */
+.fahdan-product-intake{margin-top:26px}
+.fahdan-product-intake .panel-heading h2{display:flex;align-items:center;gap:10px}
+.fahdan-intake-intro,.fahdan-intake-hint{font-size:12px;line-height:1.9;color:#68766b}
+.fahdan-intake-intro{margin:10px 0 22px}
+.fahdan-intake-alert{display:flex;align-items:center;gap:10px;font-size:13px;padding:13px 15px;margin:12px 0;border-radius:10px;line-height:1.8}
+.fahdan-intake-alert.success{background:#eaf3ea;color:#246642}
+.fahdan-intake-alert.warning{background:#fff1e8;color:#8a4a2d}
+.fahdan-intake-next{display:flex;align-items:start;gap:10px;background:#eef5e9;border:1px solid #d4e5d1;border-radius:12px;padding:13px;color:#315e3c;font-size:13px;line-height:1.9;margin-bottom:18px}
+.fahdan-intake-form{display:grid;gap:20px;max-width:1100px}
+.fahdan-intake-form fieldset{border:1px solid #e3e5d9;background:#fcfbf7;border-radius:13px;min-width:0;margin:0;padding:23px}
+.fahdan-intake-form legend{font-weight:700;color:#263e30;font-size:15px;padding:0 9px}
+.fahdan-intake-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px 22px}
+.fahdan-intake-grid label,.fahdan-intake-variant label{display:grid;gap:8px;align-content:start;font-size:12px;font-weight:700;color:#395040;min-width:0}
+.fahdan-intake-grid label.wide{grid-column:1/-1}
+.fahdan-intake-grid input,.fahdan-intake-grid textarea,.fahdan-intake-grid select,.fahdan-intake-variant input{
+  width:100%;box-sizing:border-box;border:1px solid #dce0d6;border-radius:9px;
+  background:#fff;padding:11px 13px;font:inherit;font-size:13px;color:#213e30;min-width:0;
+}
+.fahdan-intake-grid input:focus,.fahdan-intake-grid textarea:focus,.fahdan-intake-variant input:focus,.fahdan-intake-grid select:focus{outline:2px solid #c2af86;outline-offset:1px}
+.fahdan-intake-form fieldset>small{font-size:11px;color:#758074;line-height:1.8;display:block;margin-top:12px}
+.fahdan-intake-variants{display:grid;gap:11px}
+.fahdan-intake-variant{display:grid;grid-template-columns:1fr 1fr 1fr 34px;gap:12px;align-items:end;background:#fff;border:1px solid #e6e8de;border-radius:10px;padding:13px}
+.fahdan-intake-variant>button{border:0;border-radius:7px;background:#f9eae7;color:#a34a3b;cursor:pointer;height:40px;display:grid;place-items:center}
+.fahdan-intake-variant>button:disabled{opacity:.35;cursor:not-allowed}
+.fahdan-add-variant{display:inline-flex;align-items:center;gap:7px;margin-top:14px;background:#edf2ea;color:#31503a;border:1px solid #d8e2d4;padding:9px 13px;border-radius:8px;font:inherit;font-size:12px;cursor:pointer}
+.fahdan-add-variant:disabled{opacity:.45}
+.fahdan-intake-footer{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}
+.fahdan-intake-footer>p{display:flex;align-items:center;gap:8px;color:#69806d;font-size:12px;line-height:1.8;margin:0}
+.fahdan-intake-footer>.button{display:flex;align-items:center;gap:9px}
+.fahdan-intake-footer>.button:disabled{opacity:.55;cursor:wait}
+.fahdan-intake-existing{margin-top:34px;border-top:1px solid #e8e7df;padding-top:24px}
+.fahdan-intake-existing .panel-heading h3{margin:0;font-size:16px}
+.fahdan-intake-product-list{display:grid;gap:9px}
+.fahdan-intake-product-row{display:flex;align-items:center;gap:13px;justify-content:space-between;flex-wrap:wrap;padding:12px 15px;border-radius:10px;border:1px solid #e6e9de;background:#fdfcf8}
+.fahdan-intake-product-row>div{display:grid;gap:6px;flex:1;min-width:150px}
+.fahdan-intake-product-row strong{font-size:13px;color:#293d32}
+.fahdan-intake-product-row small{font-size:11px;color:#6c766f}
+.fahdan-intake-product-row>span{font-size:11px;border-radius:13px;padding:6px 11px}
+.fahdan-intake-product-row .fahdan-active{color:#24653d;background:#e4f1e6}
+.fahdan-intake-product-row .fahdan-draft{color:#7d6a3e;background:#f8f0e2}
+.fahdan-intake-product-row>button{border:1px solid #cbd9c9;background:#eef3e9;border-radius:8px;color:#285438;padding:9px 12px;font:inherit;font-size:12px;cursor:pointer}
+.fahdan-intake-product-row>button:disabled{cursor:not-allowed;opacity:.5}
+@media(max-width:850px){.fahdan-intake-grid{grid-template-columns:1fr 1fr;gap:13px}.fahdan-intake-variant{grid-template-columns:1fr 1fr}.fahdan-intake-variant>button{justify-self:start;width:36px}}
+@media(max-width:620px){.fahdan-intake-form fieldset{padding:16px}.fahdan-intake-grid,.fahdan-intake-variant{grid-template-columns:1fr}.fahdan-intake-variant>button{justify-self:end}.fahdan-intake-footer{align-items:stretch}.fahdan-intake-footer>.button{width:100%;justify-content:center}}

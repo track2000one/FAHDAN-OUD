@@ -28,7 +28,7 @@ export function getDashboard(token:string) {
   return request<Dashboard>('/admin/dashboard',{headers:{Authorization:`Bearer ${token}`}});
 }
 
-export type AdminProduct = {id:string;name:string;status:string;unit:string;onHand:number;reserved:number;reorderPoint:number;variantCount:number};
+export type AdminProduct = {id:string;name:string;status:string;unit:string;onHand:number;reserved:number;reorderPoint:number;variantCount:number;imageCount:number};
 export function getAdminProducts(token:string) {
   return request<AdminProduct[]>('/admin/products',{headers:{Authorization:`Bearer ${token}`}});
 }
@@ -162,4 +162,25 @@ export function submitPreliminaryOrder(token:string,data:{
   return request<{orderNumber:string;state:string;duplicate:boolean}>('/checkout/request',{
     method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify(data)
   });
+}
+
+export type NewProductVariant = {quantity:string;priceSar:string;compareAtPriceSar:string};
+export type NewProductIntake = {
+  code:string;nameAr:string;kind:string;
+  originCountry:string;originRegion:string;grade:string;scentProfile:string;
+  descriptionAr:string;projectionScore:number|null;longevityScore:number|null;
+  supplierName:string;supplierContact:string;receivedAt:string;invoiceReference:string;
+  stockQuantity:string;landedCostSar:string;reorderPoint:string;
+  variants:NewProductVariant[];
+};
+export function createAdminProduct(token:string,data:NewProductIntake) {
+  return request<{product:{id:string;nameAr:string;slug:string};message:string}>('/admin/products',{
+    method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify(data)
+  });
+}
+export function setAdminProductPublishing(token:string,productId:string,state:'DRAFT'|'ACTIVE') {
+  return request<{product:{id:string;state:string;slug:string};message:string}>(
+    `/admin/products/${encodeURIComponent(productId)}/publishing`,{
+      method:'PATCH',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({state})
+    });
 }
