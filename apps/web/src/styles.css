@@ -151,3 +151,32 @@
 @media(max-width:1000px){.account-layout{grid-template-columns:220px minmax(0,1fr);gap:14px}.account-address-grid{grid-template-columns:1fr}.account-stat-grid{gap:8px}.account-stat-grid>div{padding:17px 11px}}
 @media(max-width:760px){.account-page{padding-top:18px}.account-page-heading{align-items:flex-start;flex-direction:column;gap:12px}.account-layout{grid-template-columns:1fr}.account-sidebar{position:static}.account-mini-profile{display:none}.account-tabs{flex-direction:row;overflow-x:auto;scrollbar-width:thin;margin:0 0 7px}.account-tabs button{flex:0 0 auto;width:auto;padding:11px 12px;white-space:nowrap}.account-tabs button>svg:last-child{display:none}.account-signout{width:auto;margin-top:8px}.account-content{min-height:270px}.account-form-grid{grid-template-columns:1fr}}
 @media(max-width:520px){.account-page-heading h1{font-size:26px}.account-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.account-stat-grid>div:last-child{grid-column:1/-1}.account-section-title h2{font-size:21px}.account-address-grid{grid-template-columns:1fr}.account-order>summary{flex-wrap:wrap;gap:10px}.account-order>summary>div{flex:1}.account-order>summary>svg{margin-right:auto}.account-content{padding:18px}.account-welcome{padding:22px 17px}.account-verified{font-size:11px}.account-form-actions{gap:12px}}
+
+
+/* Fahdan customer-address interactive map */
+.account-map-section{display:grid;gap:13px;margin:8px 0 2px;padding:18px;border:1px solid #e1e6dc;border-radius:13px;background:#fbfaf7;min-width:0}
+.account-map-heading{display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap}
+.account-map-heading h4{display:flex;align-items:center;gap:7px;margin:0;font-size:16px;color:#244034}
+.account-map-heading h4>svg{color:#b49a6d}
+.account-map-heading h4 span{font-size:12px;font-weight:400;color:#7b8179}
+.account-map-heading p{color:#748177;font-size:12px;margin:6px 0 0;line-height:1.8}
+.account-map-locate{display:flex;align-items:center;gap:8px;background:#213e2f;color:white;border:0;border-radius:9px;padding:11px 14px;cursor:pointer;font:inherit;font-size:12px;font-weight:700}
+.account-map-locate:hover{background:#355541}
+.account-map-locate:disabled{opacity:.6;cursor:wait}
+.account-map-frame{border:1px solid #d7dccf;border-radius:11px;overflow:hidden;position:relative}
+.account-map-canvas{width:100%;height:340px;direction:ltr;z-index:0;background:#e9efe5}
+.account-map-canvas .leaflet-control-attribution{font-size:10px;direction:ltr}
+.account-map-canvas .leaflet-bar a{font-family:Arial,sans-serif}
+.fahdan-leaflet-marker{border:0;background:transparent}
+.fahdan-leaflet-pin{display:block;position:relative;width:26px;height:26px;border-radius:50% 50% 50% 0;background:#203e2d;border:3px solid #fff;box-shadow:0 3px 9px #172b2269;transform:rotate(-45deg)}
+.fahdan-leaflet-pin:after{content:"";position:absolute;width:9px;height:9px;background:#d7b97b;border-radius:50%;top:8px;left:8px}
+.account-map-meta{display:grid;gap:9px}
+.account-map-meta>p{font-size:12px;color:#708174;margin:0;line-height:1.8}
+.account-map-meta>small{font-size:11px;line-height:1.8;color:#7c867d}
+.account-map-selected{display:flex;align-items:center;gap:9px;flex-wrap:wrap;background:#e9f1e8;border-radius:9px;padding:10px 12px;color:#236a39;font-size:12px}
+.account-map-selected span{flex:1;min-width:120px}
+.account-map-selected small{display:block;margin-top:5px;text-align:right;color:#487256;font-size:11px}
+.account-map-selected button{display:flex;align-items:center;gap:5px;color:#315d3b;background:white;border:1px solid #d3dfd0;border-radius:7px;padding:8px 10px;font-family:inherit;font-size:12px;cursor:pointer}
+.account-map-error{font-size:12px;color:#a3422f;background:#fff1eb;border-radius:8px;padding:11px;margin:0;line-height:1.7}
+.account-address-map-link{display:inline-flex;gap:5px;align-items:center;color:#326c4a;font-size:12px;text-decoration:underline;text-underline-offset:4px;margin:6px 0}
+@media(max-width:600px){.account-map-section{padding:11px}.account-map-canvas{height:285px}.account-map-heading{align-items:stretch;gap:12px}.account-map-heading h4{font-size:14px}.account-map-locate{justify-content:center}}
