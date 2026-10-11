@@ -180,3 +180,5 @@
 .account-map-error{font-size:12px;color:#a3422f;background:#fff1eb;border-radius:8px;padding:11px;margin:0;line-height:1.7}
 .account-address-map-link{display:inline-flex;gap:5px;align-items:center;color:#326c4a;font-size:12px;text-decoration:underline;text-underline-offset:4px;margin:6px 0}
 @media(max-width:600px){.account-map-section{padding:11px}.account-map-canvas{height:285px}.account-map-heading{align-items:stretch;gap:12px}.account-map-heading h4{font-size:14px}.account-map-locate{justify-content:center}}
+
+.account-map-placeholder{display:grid;place-items:center;height:300px;border-radius:12px;border:1px solid #e0e5da;background:#f5f7f3;color:#52705a;font-size:13px}
