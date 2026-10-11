@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, Route, Routes, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, BadgeCheck, Box, Check, ChevronDown, Gift, LayoutDashboard, LockKeyhole, Menu, Minus, Plus, Search, ShieldCheck, ShoppingBag, Sparkles, UserRound, X } from 'lucide-react';
-import { getCatalog, getDashboard, signIn } from './api';
+import { CUSTOMER_SESSION_KEY, customerMe, getCatalog, getDashboard, signIn, type Customer } from './api';
 import { ProductArt } from './components/ProductArt';
 import { AdminWarehouse } from './components/AdminWarehouse';
 import { CustomerAccount } from './components/CustomerAccount';
@@ -19,7 +19,7 @@ function Brand({inverse=false}:{inverse?:boolean}) {
     <span><strong>فهدان <em>للعود</em></strong><small>FAHDAN OUD</small></span>
   </Link>;
 }
-function Header({cartCount,openCart}:{cartCount:number;openCart:()=>void}) {
+function Header({cartCount,openCart,customer,onLogout}:{cartCount:number;openCart:()=>void;customer:Customer|null;onLogout:()=>void}) {
   const [menu,setMenu] = useState(false);
   return <>
     <div className="announcement"><span className="gold-dot"/> متجر فهدان في مرحلة التطوير — تصفّح التجربة الأولى <span className="gold-dot"/></div>
@@ -33,7 +33,20 @@ function Header({cartCount,openCart}:{cartCount:number;openCart:()=>void}) {
       </nav>
       <div className="header-tools">
         <button className="bag-button" aria-label={`فتح السلة: ${cartCount} منتجات`} onClick={openCart}><ShoppingBag size={21}/>{cartCount>0&&<span className="bag-count">{cartCount}</span>}</button>
-        <Link className="header-admin" to="/account/login" aria-label="تسجيل الدخول أو إنشاء حساب"><UserRound size={20}/></Link>
+        {customer
+          ? <details className="header-customer-menu">
+              <summary aria-label={`حساب ${customer.name}`} title={customer.name}>
+                <UserRound size={19}/><span className="header-customer-name">{customer.name}</span><ChevronDown size={15}/>
+              </summary>
+              <div className="header-customer-popover" dir="rtl">
+                <span className="header-customer-label">أهلًا بك في فهدان</span>
+                <strong className="header-customer-fullname">{customer.name}</strong>
+                <small className="header-customer-email" dir="ltr">{customer.email}</small>
+                <Link to="/account/login" onClick={e=>{const details=e.currentTarget.closest('details');if(details)details.open=false;}}>حسابي</Link>
+                <button type="button" onClick={onLogout}>تسجيل الخروج</button>
+              </div>
+            </details>
+          : <Link className="header-admin" to="/account/login" aria-label="تسجيل الدخول أو إنشاء حساب"><UserRound size={20}/></Link>}
         <button className="mobile-menu" onClick={()=>setMenu(!menu)} aria-label={menu?'إغلاق القائمة':'فتح القائمة'}>{menu?<X size={23}/>:<Menu size={23}/>}</button>
       </div>
     </div></header>
@@ -137,9 +150,33 @@ function Footer(){return <footer className="footer"><div className="container fo
 export default function App(){
   const [products,setProducts]=useState<Product[]>(demoProducts),[categories,setCategories]=useState(fallbackCategories),[connected,setConnected]=useState(false);
   const [cart,setCart]=useState<CartLine[]>(readCart),[cartOpen,setCartOpen]=useState(false),[toast,setToast]=useState('');
+  const [customer,setCustomer] = useState<Customer|null>(null);
   const navigate=useNavigate();
   useEffect(()=>{let live=true;getCatalog().then(data=>{if(live){setProducts(data.products);setCategories(data.categories);setConnected(data.connected);}});return()=>{live=false;};},[]);
   useEffect(()=>{localStorage.setItem('fahdan-cart',JSON.stringify(cart));},[cart]);
+  useEffect(()=>{
+    const session=sessionStorage.getItem(CUSTOMER_SESSION_KEY);
+    if(!session)return;
+    let active=true;
+    customerMe(session).then(({user})=>{
+      if(active && sessionStorage.getItem(CUSTOMER_SESSION_KEY)===session)setCustomer(user);
+    }).catch(()=>{
+      if(active && sessionStorage.getItem(CUSTOMER_SESSION_KEY)===session){
+        sessionStorage.removeItem(CUSTOMER_SESSION_KEY);
+        setCustomer(null);
+      }
+    });
+    return()=>{active=false;};
+  },[]);
+  const signInCustomer=(user:Customer,token:string)=>{
+    sessionStorage.setItem(CUSTOMER_SESSION_KEY,token);
+    setCustomer(user);
+  };
+  const logoutCustomer=()=>{
+    sessionStorage.removeItem(CUSTOMER_SESSION_KEY);
+    setCustomer(null);
+    navigate('/account/login');
+  };
   useEffect(()=>{if(!toast)return;const t=setTimeout(()=>setToast(''),2500);return()=>clearTimeout(t);},[toast]);
   const add=(p:Product,v:Variant)=>{
     const existing=cart.filter(x=>x.productId===p.id).reduce((n,x)=>n+x.quantity*x.quantityBase,0);
@@ -158,10 +195,10 @@ export default function App(){
       return prev.map(x=>x.sku===sku?{...x,quantity:x.quantity+diff}:x);
     });
   };
-  return <div className="app"><Header cartCount={cart.reduce((n,x)=>n+x.quantity,0)} openCart={()=>setCartOpen(true)}/><Routes><Route path="/" element={<Home products={products} categories={categories} connected={connected}/>}/><Route path="/product/:slug" element={<ProductPage products={products} add={add}/>}/><Route path="/account/login" element={<CustomerAccount view="login"/>}/>
-<Route path="/account/register" element={<CustomerAccount view="register"/>}/>
-<Route path="/account/forgot-password" element={<CustomerAccount view="forgot-password"/>}/>
-<Route path="/account/reset-password" element={<CustomerAccount view="reset-password"/>}/>
-<Route path="/account/verify" element={<CustomerAccount view="verify"/>}/>
+  return <div className="app"><Header cartCount={cart.reduce((n,x)=>n+x.quantity,0)} openCart={()=>setCartOpen(true)} customer={customer} onLogout={logoutCustomer}/><Routes><Route path="/" element={<Home products={products} categories={categories} connected={connected}/>}/><Route path="/product/:slug" element={<ProductPage products={products} add={add}/>}/><Route path="/account/login" element={<CustomerAccount view="login" customer={customer} onSignIn={signInCustomer} onSignOut={logoutCustomer}/>}/>
+<Route path="/account/register" element={<CustomerAccount view="register" customer={customer} onSignIn={signInCustomer} onSignOut={logoutCustomer}/>}/>
+<Route path="/account/forgot-password" element={<CustomerAccount view="forgot-password" customer={customer} onSignIn={signInCustomer} onSignOut={logoutCustomer}/>}/>
+<Route path="/account/reset-password" element={<CustomerAccount view="reset-password" customer={customer} onSignIn={signInCustomer} onSignOut={logoutCustomer}/>}/>
+<Route path="/account/verify" element={<CustomerAccount view="verify" customer={customer} onSignIn={signInCustomer} onSignOut={logoutCustomer}/>}/>
 <Route path="/admin" element={<Admin/>}/><Route path="*" element={<main className="container missing"><h1>الصفحة غير موجودة</h1><button className="button dark" onClick={()=>navigate('/')}>العودة للرئيسية</button></main>}/></Routes><Footer/><CartDrawer cart={cart} visible={cartOpen} close={()=>setCartOpen(false)} change={change} remove={sku=>setCart(prev=>prev.filter(x=>x.sku!==sku))}/>{toast&&<div className="toast" role="status"><Check size={17}/>{toast}</div>}</div>;
 }
