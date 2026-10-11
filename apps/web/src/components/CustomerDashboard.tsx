@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
+import { AddressMap } from './AddressMap';
 import { ArrowLeft, ChevronLeft, CheckCircle2, Clock3, Edit3, Home, LogOut, Mail, MapPin, Package, Plus, Save, ShieldCheck, Trash2, Truck, UserRound, X } from 'lucide-react';
 import {
   createCustomerAddress, defaultCustomerAddress, deleteCustomerAddress,
@@ -12,7 +13,8 @@ type Tab = 'overview'|'profile'|'addresses'|'orders';
 const SESSION_KEY='fahdan-customer-session';
 const emptyAddress:CustomerAddressInput={
   label:'المنزل',recipientName:'',phone:'',city:'',district:'',street:'',
-  building:'',postalCode:'',additionalNumber:'',isDefault:false
+  building:'',postalCode:'',additionalNumber:'',isDefault:false,
+  latitude:null,longitude:null
 };
 const dateFormat=(value:string)=>new Intl.DateTimeFormat('ar-SA',{dateStyle:'medium'}).format(new Date(value));
 const currency=(s:string)=>new Intl.NumberFormat('ar-SA',{style:'currency',currency:'SAR'}).format(Number(s));
@@ -69,7 +71,8 @@ export function CustomerDashboard({onProfileUpdated,onLogout}:{
         label:address.label,recipientName:address.recipientName,phone:address.phone,city:address.city,
         district:address.district,street:address.street,building:address.building||'',
         postalCode:address.postalCode||'',additionalNumber:address.additionalNumber||'',
-        isDefault:address.isDefault
+        isDefault:address.isDefault,
+        latitude:address.latitude,longitude:address.longitude
       });
     } else {
       setEditingAddress(null);
