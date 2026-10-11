@@ -39,6 +39,7 @@ adminRouter.get('/products', async (_req, res, next) => {
       where: { isDemo: false }, orderBy: { createdAt: 'desc' }, take: 100,
       select: { id: true, nameAr: true, slug: true, state: true, baseUnit: true,
         balance: { select: { onHandBase: true, reservedBase: true, reorderPoint: true } },
+        _count: { select: { media: { where: { kind: 'PHOTO' } } } },
         variants: { select: { labelAr: true, priceSar: true, quantityBase: true } }
       }
     });
@@ -46,7 +47,7 @@ adminRouter.get('/products', async (_req, res, next) => {
       id: p.id, name: p.nameAr, slug: p.slug, status: p.state, unit: p.baseUnit,
       onHand: Number(p.balance?.onHandBase ?? 0), reserved: Number(p.balance?.reservedBase ?? 0),
       reorderPoint: Number(p.balance?.reorderPoint ?? 0),
-      variantCount: p.variants.length
+      variantCount: p.variants.length, imageCount: p._count.media
     })));
   } catch (e) { next(e); }
 });
