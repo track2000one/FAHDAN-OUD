@@ -19,7 +19,7 @@ const emptyAddress:CustomerAddressInput={
 const dateFormat=(value:string)=>new Intl.DateTimeFormat('ar-SA',{dateStyle:'medium'}).format(new Date(value));
 const currency=(s:string)=>new Intl.NumberFormat('ar-SA',{style:'currency',currency:'SAR'}).format(Number(s));
 const orderNames:Record<string,string>={
-  PENDING_PAYMENT:'بانتظار الدفع',PAID:'تم الدفع',PREPARING:'جارٍ التجهيز',
+  AWAITING_REVIEW:'بانتظار مراجعة المتجر',PENDING_PAYMENT:'بانتظار الدفع',PAID:'تم الدفع',PREPARING:'جارٍ التجهيز',
   SHIPPED:'تم الشحن',DELIVERED:'تم التسليم',CANCELLED:'ملغي',
   RETURN_REQUESTED:'طلب استرجاع',RETURNED:'تم الاسترجاع'
 };
