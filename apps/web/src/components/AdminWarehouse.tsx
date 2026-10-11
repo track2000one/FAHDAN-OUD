@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { getAdminProducts, getDriveStatus, uploadAdminProductImage, type AdminProduct } from '../api';
 
-export function AdminWarehouse({token}:{token:string}) {
+export function AdminWarehouse({token,revision,onUpdated}:{token:string;revision:number;onUpdated:()=>void}) {
   const [products,setProducts] = useState<AdminProduct[]>([]);
   const [selected,setSelected] = useState('');
   const [file,setFile] = useState<File|null>(null);
@@ -27,7 +27,7 @@ export function AdminWarehouse({token}:{token:string}) {
       } else setMessage('تعذر التحقق من صلاحية Google Drive. راجع التفويض.');
     });
     return () => {active = false;};
-  },[token]);
+  },[token,revision]);
 
   async function submit(e:FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -35,6 +35,7 @@ export function AdminWarehouse({token}:{token:string}) {
     setBusy(true);setMessage('');
     try {
       await uploadAdminProductImage(token,selected,file);
+      onUpdated();
       setMessage('تم حفظ الصورة في Google Drive وربطها بالصنف.');
       setFile(null);
       const control=document.getElementById('fahdan-upload') as HTMLInputElement|null;
