@@ -31,10 +31,13 @@ const app = express();
 app.set('trust proxy', 1);
 app.disable('x-powered-by');
 app.use(helmet({
-  // Allow map tile images while retaining Helmet's remaining default CSP protection.
+  // OpenFreeMap vector maps require style/tile/glyph connections and a same-origin MapLibre worker.
+  // Keep all other Helmet CSP directives at their restrictive defaults.
   contentSecurityPolicy: {
     directives: {
-      'img-src': ["'self'", 'data:', 'https://tile.openstreetmap.org']
+      'connect-src': ["'self'", 'https://tiles.openfreemap.org', 'https://assets.openfreemap.com'],
+      'img-src': ["'self'", 'data:', 'blob:', 'https://tiles.openfreemap.org', 'https://assets.openfreemap.com'],
+      'worker-src': ["'self'"]
     }
   }
 }));
