@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, Route, Routes, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, BadgeCheck, Box, Check, ChevronDown, Gift, LayoutDashboard, LockKeyhole, Menu, Minus, Plus, Search, ShieldCheck, ShoppingBag, Sparkles, UserRound, X } from 'lucide-react';
-import { CUSTOMER_SESSION_KEY, customerMe, getCatalog, getDashboard, signIn, type Customer } from './api';
+import { customerMe, getCatalog, getDashboard, signIn, type Customer } from './api';
 import { ProductArt } from './components/ProductArt';
 import { AdminWarehouse } from './components/AdminWarehouse';
 import { CustomerAccount } from './components/CustomerAccount';
 import { demoProducts, fallbackCategories } from './demo';
 import type { CartLine, Dashboard, Product, Variant } from './types';
 
+const CUSTOMER_SESSION_KEY = 'fahdan-customer-session';
 const sar = (value:number) => new Intl.NumberFormat('ar-SA',{maximumFractionDigits:2}).format(value) + ' ر.س';
 const whole = (value:number) => new Intl.NumberFormat('ar-SA',{maximumFractionDigits:0}).format(value);
 const isDemoNotice = 'المحتوى والأسعار المعروضة في هذه النسخة تجريبية، وليست عرضًا للبيع. الدفع والشحن غير مفعلين.';
