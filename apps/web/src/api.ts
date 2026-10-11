@@ -142,3 +142,24 @@ export function deleteCustomerAddress(token:string,id:string) {
 export function getCustomerOrders(token:string) {
   return request<{orders:CustomerOrder[]}>('/account/orders',{headers:customerHeaders(token)});
 }
+
+
+export type CheckoutCartItem = {variantId:string;quantity:number};
+export type CheckoutQuote = {
+  items:{variantId:string;sku:string;name:string;label:string;quantity:number;
+    unitPriceSar:string;lineTotalSar:string}[];
+  subtotalSar:string;shippingSar:null;taxSar:null;amountDueSar:null;
+  preliminary:true;notice:string;
+};
+export function getCheckoutQuote(token:string,items:CheckoutCartItem[]) {
+  return request<CheckoutQuote>('/checkout/quote',{
+    method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({items})
+  });
+}
+export function submitPreliminaryOrder(token:string,data:{
+  addressId:string;items:CheckoutCartItem[];requestKey:string;acknowledged:true
+}){
+  return request<{orderNumber:string;state:string;duplicate:boolean}>('/checkout/request',{
+    method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify(data)
+  });
+}

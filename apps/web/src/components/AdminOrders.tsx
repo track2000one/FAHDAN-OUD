@@ -5,7 +5,7 @@ import { getAdminOrders, type AdminOrder, type DeliverySnapshot } from '../api';
 const formatDate=(value:string)=>new Intl.DateTimeFormat('ar-SA',{dateStyle:'medium',timeStyle:'short'}).format(new Date(value));
 const sar=(value:string)=>new Intl.NumberFormat('ar-SA',{style:'currency',currency:'SAR'}).format(Number(value));
 const stateName:Record<string,string>={
-  PENDING_PAYMENT:'بانتظار الدفع',PAID:'مدفوع',PREPARING:'جارٍ التجهيز',SHIPPED:'تم الشحن',
+  AWAITING_REVIEW:'بانتظار مراجعة المتجر',PENDING_PAYMENT:'بانتظار الدفع',PAID:'مدفوع',PREPARING:'جارٍ التجهيز',SHIPPED:'تم الشحن',
   DELIVERED:'تم التسليم',CANCELLED:'ملغي',RETURN_REQUESTED:'طلب استرجاع',RETURNED:'مرتجع'
 };
 

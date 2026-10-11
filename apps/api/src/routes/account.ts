@@ -9,7 +9,7 @@ import { deliveryFromOrderSnapshot } from '../lib/delivery.js';
 export const accountRouter = Router();
 accountRouter.use(rateLimit({ windowMs:15*60*1000, limit:120, standardHeaders:'draft-7', legacyHeaders:false }));
 
-const requireCustomer: RequestHandler = async (req,res,next) => {
+export const requireCustomer: RequestHandler = async (req,res,next) => {
   try {
     const token=req.headers.authorization?.match(/^Bearer (.+)$/)?.[1];
     if(!token){res.status(401).json({error:'يرجى تسجيل الدخول إلى حسابك.'});return;}

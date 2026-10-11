@@ -12,7 +12,7 @@ adminRouter.get('/dashboard', async (_req, res, next) => {
   try {
     const [totalProducts, openOrders, orderSummary, balances] = await Promise.all([
       prisma.product.count({ where: { isDemo: false } }),
-      prisma.order.count({ where: { state: { in: ['PENDING_PAYMENT', 'PAID', 'PREPARING'] } } }),
+      prisma.order.count({ where: { state: { in: ['AWAITING_REVIEW', 'PENDING_PAYMENT', 'PAID', 'PREPARING'] } } }),
       prisma.order.aggregate({
         where: { state: { in: ['PAID', 'PREPARING', 'SHIPPED', 'DELIVERED'] } },
         _sum: { totalSar: true }, _count: true
