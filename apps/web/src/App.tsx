@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { Link, Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom';
+import { Link, Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, BadgeCheck, Box, Check, ChevronDown, Gift, LayoutDashboard, LockKeyhole, Menu, Minus, Plus, Search, ShieldCheck, ShoppingBag, Sparkles, UserRound, X } from 'lucide-react';
 import { customerMe, getCatalog, getDashboard, signIn, type Customer } from './api';
 import { ProductArt } from './components/ProductArt';
@@ -163,7 +163,8 @@ export default function App(){
   const [customer,setCustomer] = useState<Customer|null>(null);
   const [customerLoading,setCustomerLoading] = useState(()=>Boolean(sessionStorage.getItem(CUSTOMER_SESSION_KEY)));
   const navigate=useNavigate();
-  useEffect(()=>{let live=true;getCatalog().then(data=>{if(live){setProducts(data.products);setCategories(data.categories);setConnected(data.connected);}});return()=>{live=false;};},[]);
+  const location=useLocation();
+  useEffect(()=>{let live=true;getCatalog().then(data=>{if(live){setProducts(data.products);setCategories(data.categories);setConnected(data.connected);}});return()=>{live=false;};},[location.pathname]);
   useEffect(()=>{localStorage.setItem('fahdan-cart',JSON.stringify(cart));},[cart]);
   useEffect(()=>{
     const session=sessionStorage.getItem(CUSTOMER_SESSION_KEY);
