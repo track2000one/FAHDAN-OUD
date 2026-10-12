@@ -362,10 +362,11 @@ export function AdminProductIntake({token,revision,onUpdated}:{
         {products.map(p=><div key={p.id} className="fahdan-intake-product-row">
           <div><strong>{p.name}</strong><small>رصيد {pretty(p.onHand-p.reserved)} {units[p.unit]} · {p.variantCount} أحجام · {p.imageCount} صور</small></div>
           <span className={p.status==='ACTIVE'?'fahdan-active':'fahdan-draft'}>{p.status==='ACTIVE'?'معتمد ومنشور':p.status==='DRAFT'?'بانتظار الاعتماد':'غير منشور'}</span>
-          <button type="button" onClick={()=>
-            document.getElementById(`fahdan-review-${p.id}`)?.scrollIntoView({behavior:'smooth',block:'center'})||
-            document.getElementById('fahdan-product-review')?.scrollIntoView({behavior:'smooth'})
-          }>مراجعة واعتماد</button>
+          <button type="button" onClick={()=>{
+            const target=document.getElementById(`fahdan-review-${p.id}`)||
+              document.getElementById('fahdan-product-review');
+            target?.scrollIntoView({behavior:'smooth',block:'center'});
+          }}>مراجعة واعتماد</button>
         </div>)}
       </div>}
       <small className="fahdan-intake-hint">لا يمكن نشر منتج مباشرة من قائمة الإدخال. الاعتماد النهائي يتم حصريًا من قسم «مراجعة واعتماد المنتجات» بعد فحص التفاصيل والأسعار والصور والمخزون.</small>
