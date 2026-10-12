@@ -2,6 +2,7 @@ import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
 import { CheckCircle2, CircleAlert, ImagePlus, PackagePlus, Plus, Save, ShieldCheck, Trash2, UploadCloud, Images } from 'lucide-react';
 import {
   createAdminProduct, getAdminProducts, setAdminProductPublishing, uploadAdminProductImage,
+  ProductIntakeValidationError, type ProductIntakeIssue,
   type AdminProduct, type NewProductIntake, type NewProductVariant
 } from '../api';
 
@@ -40,6 +41,7 @@ export function AdminProductIntake({token,revision,onUpdated}:{
   const [busy,setBusy]=useState(false);
   const [publishing,setPublishing]=useState('');
   const [error,setError]=useState('');
+  const [validationIssues,setValidationIssues]=useState<ProductIntakeIssue[]>([]);
   const [notice,setNotice]=useState('');
   const [created,setCreated]=useState<CreatedProduct|null>(null);
   const [pendingUpload,setPendingUpload]=useState<CreatedProduct|null>(null);
@@ -48,10 +50,23 @@ export function AdminProductIntake({token,revision,onUpdated}:{
   const [uploadProgress,setUploadProgress]=useState<{done:number;total:number}|null>(null);
   const kind=kinds.find(k=>k.value===form.kind)||kinds[0];
   const unit=units[kind.unit];
-  const setField=<K extends keyof NewProductIntake>(key:K,value:NewProductIntake[K])=>
+  const setField=<K extends keyof NewProductIntake>(key:K,value:NewProductIntake[K])=>{
     setForm(prev=>({...prev,[key]:value}));
-  const setVariant=(index:number,key:keyof NewProductVariant,value:string)=>
+    setValidationIssues(previous=>previous.filter(issue=>issue.field!==key&&
+      !(key==='stockQuantity'&&issue.field==='variants')));
+  };
+  const setVariant=(index:number,key:keyof NewProductVariant,value:string)=>{
     setForm(prev=>({...prev,variants:prev.variants.map((item,i)=>i===index?{...item,[key]:value}:item)}));
+    setValidationIssues(previous=>previous.filter(issue=>issue.field!==`variants.${index}.${key}`&&issue.field!=='variants'));
+  };
+  const invalid=(field:string)=>validationIssues.some(issue=>issue.field===field);
+  function focusIssue(field:string){
+    const elements=Array.from(document.querySelectorAll<HTMLElement>('[data-intake-field]'));
+    const found=elements.find(el=>el.dataset.intakeField===field)||
+      (field==='variants'?elements.find(el=>el.dataset.intakeField?.startsWith('variants.')):undefined);
+    found?.scrollIntoView({behavior:'smooth',block:'center'});
+    found?.focus({preventScroll:true});
+  }
 
   useEffect(()=>{
     let active=true;
@@ -125,7 +140,7 @@ export function AdminProductIntake({token,revision,onUpdated}:{
   async function submit(e:FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if(busy||pendingUpload)return;
-    setBusy(true);setError('');setNotice('');setCreated(null);
+    setBusy(true);setError('');setValidationIssues([]);setNotice('');setCreated(null);
     try {
       const queue=[...photos];
       const result=await createAdminProduct(token,form);
@@ -137,7 +152,12 @@ export function AdminProductIntake({token,revision,onUpdated}:{
       onUpdated();
       await uploadToCreatedProduct(product,queue);
     } catch(e) {
-      setError(e instanceof Error?e.message:'تعذر تسجيل المنتج.');
+      if(e instanceof ProductIntakeValidationError){
+        setValidationIssues(e.issues);
+        setError(e.message);
+      }else{
+        setError(e instanceof Error?e.message:'تعذر تسجيل المنتج.');
+      }
     } finally {setBusy(false);}
   }
 
@@ -168,6 +188,7 @@ export function AdminProductIntake({token,revision,onUpdated}:{
 
   const updateKind=(value:string)=>{
     setForm(prev=>({...prev,kind:value,variants:[newVariant()]}));
+    setValidationIssues([]);
   };
 
   return <section className="admin-panel fahdan-product-intake">
@@ -175,6 +196,15 @@ export function AdminProductIntake({token,revision,onUpdated}:{
     <p className="fahdan-intake-intro">سجّل بيانات العود والمورد والكمية والتكلفة الفعلية وأسعار الأحجام. ينشئ النظام سجل شراء ودفعة مخزون وحركة استلام، ويحفظ المنتج مسودةً إلى أن ترفع صورته وتنشره.</p>
     {notice&&<p className="fahdan-intake-alert success" role="status"><CheckCircle2 size={18}/>{notice}</p>}
     {error&&<p className="fahdan-intake-alert warning" role="alert"><CircleAlert size={18}/>{error}</p>}
+    {validationIssues.length>0&&<div className="fahdan-intake-validation-errors" role="alert">
+      <strong>الحقول التي تحتاج إلى تصحيح ({validationIssues.length}):</strong>
+      <ul>{validationIssues.map((issue,index)=><li key={issue.field+'-'+index}>
+        <button type="button" onClick={()=>focusIssue(issue.field)}>
+          {issue.message}
+        </button>
+      </li>)}</ul>
+      <small>اضغط على أي ملاحظة للانتقال مباشرة إلى الحقل المرتبط بها. ستبقى الصور المحددة كما هي.</small>
+    </div>}
     {created&&!pendingUpload&&<div className="fahdan-intake-next">
       <ImagePlus size={19}/><span>تم إنشاء «{created.name}». الصور الناجحة مرتبطة بالمنتج، ويمكنك نشره من قائمة المنتجات أدناه بعد التحقق من اكتماله.</span>
       <button type="button" className="fahdan-intake-upload-link" onClick={()=>
@@ -204,42 +234,42 @@ export function AdminProductIntake({token,revision,onUpdated}:{
       <fieldset disabled={busy}><legend>1. بيانات المنتج</legend>
         <div className="fahdan-intake-grid">
           <label>اسم المنتج بالعربية *
-            <input required minLength={3} maxLength={140} value={form.nameAr}
+            <input required minLength={3} maxLength={140} data-intake-field="nameAr" aria-invalid={invalid('nameAr')} value={form.nameAr}
               placeholder="الاسم التجاري الفعلي للعود" onChange={e=>setField('nameAr',e.target.value)}/>
           </label>
           <label>رمز الصنف الفريد (أحرف إنجليزية وأرقام) *
             <input required dir="ltr" minLength={3} maxLength={23} pattern="[A-Za-z0-9][A-Za-z0-9-]{2,22}"
-              value={form.code} placeholder="MRK-01" onChange={e=>setField('code',e.target.value.toUpperCase())}/>
+              data-intake-field="code" aria-invalid={invalid('code')} value={form.code} placeholder="MRK-01" onChange={e=>setField('code',e.target.value.toUpperCase())}/>
           </label>
           <label>قسم المنتج *
-            <select required value={form.kind} onChange={e=>updateKind(e.target.value)}>
+            <select required data-intake-field="kind" aria-invalid={invalid('kind')} value={form.kind} onChange={e=>updateKind(e.target.value)}>
               {kinds.map(item=><option key={item.value} value={item.value}>{item.label}</option>)}
             </select>
           </label>
           <label>بلد المنشأ
-            <input maxLength={100} value={form.originCountry} onChange={e=>setField('originCountry',e.target.value)}/>
+            <input maxLength={100} data-intake-field="originCountry" aria-invalid={invalid('originCountry')} value={form.originCountry} onChange={e=>setField('originCountry',e.target.value)}/>
           </label>
           <label>منطقة المنشأ
-            <input maxLength={100} value={form.originRegion} onChange={e=>setField('originRegion',e.target.value)}/>
+            <input maxLength={100} data-intake-field="originRegion" aria-invalid={invalid('originRegion')} value={form.originRegion} onChange={e=>setField('originRegion',e.target.value)}/>
           </label>
           <label>الدرجة / التصنيف
-            <input maxLength={120} value={form.grade} onChange={e=>setField('grade',e.target.value)}/>
+            <input maxLength={120} data-intake-field="grade" aria-invalid={invalid('grade')} value={form.grade} onChange={e=>setField('grade',e.target.value)}/>
           </label>
           <label>وصف الرائحة
-            <input maxLength={500} value={form.scentProfile} onChange={e=>setField('scentProfile',e.target.value)}/>
+            <input maxLength={500} data-intake-field="scentProfile" aria-invalid={invalid('scentProfile')} value={form.scentProfile} onChange={e=>setField('scentProfile',e.target.value)}/>
           </label>
           <label>قوة الفوحان (اختياري)
-            <select value={form.projectionScore??''} onChange={e=>setField('projectionScore',e.target.value?Number(e.target.value):null)}>
+            <select data-intake-field="projectionScore" aria-invalid={invalid('projectionScore')} value={form.projectionScore??''} onChange={e=>setField('projectionScore',e.target.value?Number(e.target.value):null)}>
               <option value="">لم يحدد</option>{[1,2,3,4,5].map(n=><option key={n} value={n}>{n} من 5</option>)}
             </select>
           </label>
           <label>مستوى الثبات (اختياري)
-            <select value={form.longevityScore??''} onChange={e=>setField('longevityScore',e.target.value?Number(e.target.value):null)}>
+            <select data-intake-field="longevityScore" aria-invalid={invalid('longevityScore')} value={form.longevityScore??''} onChange={e=>setField('longevityScore',e.target.value?Number(e.target.value):null)}>
               <option value="">لم يحدد</option>{[1,2,3,4,5].map(n=><option key={n} value={n}>{n} من 5</option>)}
             </select>
           </label>
           <label className="wide">وصف المنتج
-            <textarea rows={3} maxLength={1800} value={form.descriptionAr}
+            <textarea rows={3} maxLength={1800} data-intake-field="descriptionAr" aria-invalid={invalid('descriptionAr')} value={form.descriptionAr}
               onChange={e=>setField('descriptionAr',e.target.value)}/>
           </label>
         </div>
@@ -248,31 +278,31 @@ export function AdminProductIntake({token,revision,onUpdated}:{
         <p className="fahdan-intake-hint">أدخل بيانات شراء فعلية فقط. جميع التكاليف لا تظهر للعملاء. وحدة المخزون لهذا القسم: <b>{unit}</b>.</p>
         <div className="fahdan-intake-grid">
           <label>اسم المورد *
-            <input required minLength={2} maxLength={160} value={form.supplierName}
+            <input required minLength={2} maxLength={160} data-intake-field="supplierName" aria-invalid={invalid('supplierName')} value={form.supplierName}
               onChange={e=>setField('supplierName',e.target.value)}/>
           </label>
           <label>بيانات تواصل المورد (اختياري)
-            <input maxLength={160} value={form.supplierContact}
+            <input maxLength={160} data-intake-field="supplierContact" aria-invalid={invalid('supplierContact')} value={form.supplierContact}
               onChange={e=>setField('supplierContact',e.target.value)}/>
           </label>
           <label>تاريخ الاستلام *
-            <input required type="date" value={form.receivedAt} onChange={e=>setField('receivedAt',e.target.value)}/>
+            <input required type="date" data-intake-field="receivedAt" aria-invalid={invalid('receivedAt')} value={form.receivedAt} onChange={e=>setField('receivedAt',e.target.value)}/>
           </label>
           <label>مرجع فاتورة الشراء
-            <input maxLength={100} value={form.invoiceReference}
+            <input maxLength={100} data-intake-field="invoiceReference" aria-invalid={invalid('invoiceReference')} value={form.invoiceReference}
               onChange={e=>setField('invoiceReference',e.target.value)}/>
           </label>
           <label>الكمية المشتراة ({unit}) *
             <input required min="0.001" step={kind.unit==='PIECE'?'1':'0.001'} type="number"
-              value={form.stockQuantity} onChange={e=>setField('stockQuantity',e.target.value)}/>
+              data-intake-field="stockQuantity" aria-invalid={invalid('stockQuantity')} value={form.stockQuantity} onChange={e=>setField('stockQuantity',e.target.value)}/>
           </label>
           <label>إجمالي تكلفة الشراء الفعلية (ر.س) *
-            <input required type="number" min="0.01" step="0.01" value={form.landedCostSar}
+            <input required type="number" min="0.01" step="0.01" data-intake-field="landedCostSar" aria-invalid={invalid('landedCostSar')} value={form.landedCostSar}
               onChange={e=>setField('landedCostSar',e.target.value)}/>
           </label>
           <label>حد تنبيه قرب النفاد ({unit}) *
             <input required type="number" min="0" step={kind.unit==='PIECE'?'1':'0.001'}
-              value={form.reorderPoint} onChange={e=>setField('reorderPoint',e.target.value)}/>
+              data-intake-field="reorderPoint" aria-invalid={invalid('reorderPoint')} value={form.reorderPoint} onChange={e=>setField('reorderPoint',e.target.value)}/>
           </label>
         </div>
         <small>تكلفة الشراء المدخلة تشمل أي مصاريف مخصصة للمنتج مثل النقل والرسوم؛ لا تضف المصاريف مرتين.</small>
@@ -283,15 +313,15 @@ export function AdminProductIntake({token,revision,onUpdated}:{
           {form.variants.map((v,i)=><div className="fahdan-intake-variant" key={i}>
             <label>الحجم ({unit}) *
               <input required type="number" min="0.001" step={kind.unit==='PIECE'?'1':'0.001'}
-                value={v.quantity} onChange={e=>setVariant(i,'quantity',e.target.value)}/>
+                data-intake-field={`variants.${i}.quantity`} aria-invalid={invalid(`variants.${i}.quantity`)||invalid('variants')} value={v.quantity} onChange={e=>setVariant(i,'quantity',e.target.value)}/>
             </label>
             <label>سعر البيع (ر.س) *
               <input required type="number" step="0.01" min="0.01"
-                value={v.priceSar} onChange={e=>setVariant(i,'priceSar',e.target.value)}/>
+                data-intake-field={`variants.${i}.priceSar`} aria-invalid={invalid(`variants.${i}.priceSar`)||invalid('variants')} value={v.priceSar} onChange={e=>setVariant(i,'priceSar',e.target.value)}/>
             </label>
             <label>السعر قبل الخصم (اختياري)
               <input type="number" step="0.01" min="0.01"
-                value={v.compareAtPriceSar} onChange={e=>setVariant(i,'compareAtPriceSar',e.target.value)}/>
+                data-intake-field={`variants.${i}.compareAtPriceSar`} aria-invalid={invalid(`variants.${i}.compareAtPriceSar`)||invalid('variants')} value={v.compareAtPriceSar} onChange={e=>setVariant(i,'compareAtPriceSar',e.target.value)}/>
             </label>
             <button type="button" aria-label="حذف الحجم" title="حذف الحجم"
               disabled={form.variants.length===1}

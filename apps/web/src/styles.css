@@ -391,3 +391,18 @@ border:2px dashed #b8cab8;border-radius:12px;padding:24px 15px;background:#f7faf
 .fahdan-intake-pending-actions>button:not(.button){font:inherit;font-size:12px;color:#705b40;background:transparent;border:0;text-decoration:underline;cursor:pointer}
 .fahdan-intake-pending-actions>button:disabled{opacity:.5;cursor:not-allowed}
 @media(max-width:620px){.fahdan-inline-preview{grid-template-columns:repeat(2,minmax(0,1fr))}.fahdan-intake-pending{padding:16px}.fahdan-inline-photo-picker{padding:18px 10px}}
+
+
+/* Product creation validation: actionable, field-specific errors */
+.fahdan-intake-validation-errors{border:1px solid #e6bdae;background:#fff8f4;color:#873e2e;
+  padding:16px 19px;border-radius:12px;margin:10px 0 22px;font-size:13px;line-height:1.9}
+.fahdan-intake-validation-errors>strong{display:block;margin-bottom:7px}
+.fahdan-intake-validation-errors ul{padding-right:20px;margin:5px 0 10px}
+.fahdan-intake-validation-errors li{margin:5px 0}
+.fahdan-intake-validation-errors button{color:#963f2d;text-decoration:underline;text-underline-offset:3px;
+  text-align:right;background:transparent;border:0;padding:2px 0;font:inherit;cursor:pointer}
+.fahdan-intake-validation-errors button:focus-visible{outline:2px solid #8b4a3a;outline-offset:2px}
+.fahdan-intake-validation-errors small{font-size:11px;color:#98715d;line-height:1.8}
+.fahdan-intake-form [aria-invalid="true"]{border:2px solid #c5533d!important;background:#fff7f2!important;
+  box-shadow:0 0 0 2px #c5533d18}
+.fahdan-intake-form [aria-invalid="true"]:focus{outline:2px solid #bd7863}
