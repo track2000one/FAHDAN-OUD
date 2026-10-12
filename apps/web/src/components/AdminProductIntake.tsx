@@ -1,7 +1,7 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
 import { CheckCircle2, CircleAlert, ImagePlus, PackagePlus, Plus, Save, ShieldCheck, Trash2, UploadCloud, Images } from 'lucide-react';
 import {
-  createAdminProduct, getAdminProducts, setAdminProductPublishing, uploadAdminProductImage,
+  createAdminProduct, getAdminProducts, uploadAdminProductImage,
   ProductIntakeValidationError, type ProductIntakeIssue,
   type AdminProduct, type NewProductIntake, type NewProductVariant
 } from '../api';
@@ -39,7 +39,6 @@ export function AdminProductIntake({token,revision,onUpdated}:{
   const [form,setForm]=useState<NewProductIntake>(blank);
   const [products,setProducts]=useState<AdminProduct[]>([]);
   const [busy,setBusy]=useState(false);
-  const [publishing,setPublishing]=useState('');
   const [error,setError]=useState('');
   const [validationIssues,setValidationIssues]=useState<ProductIntakeIssue[]>([]);
   const [notice,setNotice]=useState('');
@@ -132,7 +131,7 @@ export function AdminProductIntake({token,revision,onUpdated}:{
       setError('تعذر رفع '+failures.length+' صورة: '+failures.map(f=>f.file.name+' ('+f.reason+')').join('، ')+'. يمكنك إعادة المحاولة دون إنشاء المنتج مرة أخرى.');
     }else{
       setPendingUpload(null);
-      setNotice('تم حفظ «'+product.name+'» كمسودة ورفع '+succeeded+' صورة إلى Google Drive بنجاح. يمكنك الآن نشره من قائمة المنتجات.');
+      setNotice('تم حفظ «'+product.name+'» كمسودة ورفع '+succeeded+' صورة إلى Google Drive بنجاح. يمكنك الآن مراجعته واعتماده من قسم المراجعة.');
       setError('');
     }
   }
@@ -175,17 +174,6 @@ export function AdminProductIntake({token,revision,onUpdated}:{
     setNotice('المنتج «'+name+'» محفوظ كمسودة. يمكنك رفع الصور المتبقية لاحقًا من مكتبة Google Drive.');
   }
 
-  async function changePublishing(product:AdminProduct){
-    setPublishing(product.id);setError('');setNotice('');
-    try{
-      const next=product.status==='ACTIVE'?'DRAFT':'ACTIVE';
-      const result=await setAdminProductPublishing(token,product.id,next);
-      setNotice(result.message);
-      onUpdated();
-    }catch(e){setError(e instanceof Error?e.message:'تعذر تغيير حالة النشر.');}
-    finally{setPublishing('');}
-  }
-
   const updateKind=(value:string)=>{
     setForm(prev=>({...prev,kind:value,variants:[newVariant()]}));
     setValidationIssues([]);
@@ -193,7 +181,7 @@ export function AdminProductIntake({token,revision,onUpdated}:{
 
   return <section className="admin-panel fahdan-product-intake">
     <div className="panel-heading"><h2><PackagePlus size={20}/> إدخال المنتجات والمشتريات الفعلية</h2><span>للمدير فقط</span></div>
-    <p className="fahdan-intake-intro">سجّل بيانات العود والمورد والكمية والتكلفة الفعلية وأسعار الأحجام. ينشئ النظام سجل شراء ودفعة مخزون وحركة استلام، ويحفظ المنتج مسودةً إلى أن ترفع صورته وتنشره.</p>
+    <p className="fahdan-intake-intro">سجّل بيانات العود والمورد والكمية والتكلفة الفعلية وأسعار الأحجام. يبقى المنتج بانتظار الاعتماد حتى يراجع المدير بياناته وصوره وأسعاره في قسم «مراجعة واعتماد المنتجات» الموجود أعلى هذه الصفحة.</p>
     {notice&&<p className="fahdan-intake-alert success" role="status"><CheckCircle2 size={18}/>{notice}</p>}
     {error&&<p className="fahdan-intake-alert warning" role="alert"><CircleAlert size={18}/>{error}</p>}
     {validationIssues.length>0&&<div className="fahdan-intake-validation-errors" role="alert">
@@ -369,16 +357,19 @@ export function AdminProductIntake({token,revision,onUpdated}:{
       </div>
     </form>}
     <div className="fahdan-intake-existing">
-      <div className="panel-heading"><h3>المنتجات المسجلة وحالة النشر</h3><span>{products.length} أصناف</span></div>
+      <div className="panel-heading"><h3>المنتجات المسجلة وحالة الاعتماد</h3><span>{products.length} أصناف</span></div>
       {!products.length?<p className="fahdan-intake-hint">لم تُسجّل أصناف فعلية بعد.</p>:<div className="fahdan-intake-product-list">
         {products.map(p=><div key={p.id} className="fahdan-intake-product-row">
           <div><strong>{p.name}</strong><small>رصيد {pretty(p.onHand-p.reserved)} {units[p.unit]} · {p.variantCount} أحجام · {p.imageCount} صور</small></div>
-          <span className={p.status==='ACTIVE'?'fahdan-active':'fahdan-draft'}>{p.status==='ACTIVE'?'منشور':'مسودة'}</span>
-          <button type="button" disabled={!!publishing|| (p.status!=='ACTIVE'&&p.imageCount===0)}
-            onClick={()=>changePublishing(p)}>{publishing===p.id?'جارٍ الحفظ…':p.status==='ACTIVE'?'إيقاف النشر':'نشر المنتج'}</button>
+          <span className={p.status==='ACTIVE'?'fahdan-active':'fahdan-draft'}>{p.status==='ACTIVE'?'معتمد ومنشور':p.status==='DRAFT'?'بانتظار الاعتماد':'غير منشور'}</span>
+          <button type="button" onClick={()=>{
+            const target=document.getElementById(`fahdan-review-${p.id}`)||
+              document.getElementById('fahdan-product-review');
+            target?.scrollIntoView({behavior:'smooth',block:'center'});
+          }}>مراجعة واعتماد</button>
         </div>)}
       </div>}
-      <small className="fahdan-intake-hint">قبل نشر المسودة ارفع صورة واحدة على الأقل من قسم Google Drive التالي، وتأكد من وجود كمية تكفي أحد أحجام البيع.</small>
+      <small className="fahdan-intake-hint">لا يمكن نشر منتج مباشرة من قائمة الإدخال. الاعتماد النهائي يتم حصريًا من قسم «مراجعة واعتماد المنتجات» بعد فحص التفاصيل والأسعار والصور والمخزون.</small>
     </div>
   </section>;
 }

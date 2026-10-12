@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { Router } from 'express';
 import { Prisma, type BaseUnit, type ProductKind } from '@prisma/client';
 import { z } from 'zod';
+import { readImage } from '../lib/google-drive.js';
 import { prisma } from '../lib/db.js';
 import { requireOwner } from '../lib/auth.js';
 
@@ -201,9 +202,156 @@ productIntakeRouter.post('/products',async(req,res,next)=>{
   }
 });
 
+
+const reviewMoney=z.string().trim().regex(/^\d{1,10}(?:\.\d{1,2})?$/)
+  .refine(value=>new Prisma.Decimal(value).gt(0),'يجب إدخال سعر موجب بمنزلتين عشريتين');
+const reviewSchema=z.object({
+  nameAr:z.string().trim().min(3).max(140),
+  originCountry:z.string().trim().max(100),
+  originRegion:z.string().trim().max(100),
+  grade:z.string().trim().max(120),
+  scentProfile:z.string().trim().max(500),
+  descriptionAr:z.string().trim().max(1800),
+  projectionScore:z.number().int().min(1).max(5).nullable(),
+  longevityScore:z.number().int().min(1).max(5).nullable(),
+  variants:z.array(z.object({
+    id:z.string().min(1),
+    priceSar:reviewMoney,
+    compareAtPriceSar:z.union([reviewMoney,z.literal('')])
+  })).min(1).max(12)
+}).superRefine((data,ctx)=>{
+  if(new Set(data.variants.map(v=>v.id)).size!==data.variants.length) {
+    ctx.addIssue({code:'custom',path:['variants'],message:'تكرار أحد أحجام البيع.'});
+  }
+  data.variants.forEach((v,i)=>{
+    if(v.compareAtPriceSar&&new Prisma.Decimal(v.compareAtPriceSar).lte(new Prisma.Decimal(v.priceSar)))
+      ctx.addIssue({code:'custom',path:['variants',i,'compareAtPriceSar'],message:'السعر قبل الخصم يجب أن يكون أكبر من سعر البيع.'});
+  });
+});
+
+// Owner-only review list: includes DRAFT products, which never appear in public catalog.
+productIntakeRouter.get('/products/review',async(_req,res,next)=>{
+  try{
+    const products=await prisma.product.findMany({
+      where:{isDemo:false},take:100,orderBy:{createdAt:'desc'},
+      select:{
+        id:true,slug:true,nameAr:true,kind:true,baseUnit:true,state:true,
+        originCountry:true,originRegion:true,grade:true,scentProfile:true,descriptionAr:true,
+        projectionScore:true,longevityScore:true,createdAt:true,updatedAt:true,
+        balance:{select:{onHandBase:true,reservedBase:true,reorderPoint:true}},
+        variants:{orderBy:{quantityBase:'asc'},select:{
+          id:true,sku:true,labelAr:true,quantityBase:true,priceSar:true,compareAtPriceSar:true,active:true
+        }},
+        media:{where:{kind:'PHOTO'},orderBy:{sort:'asc'},select:{id:true,altAr:true,sort:true}},
+        purchaseLines:{take:1,orderBy:{createdAt:'desc'},select:{
+          quantityBase:true,totalCostSar:true,
+          purchase:{select:{receivedAt:true,invoiceReference:true,
+            supplier:{select:{name:true}}
+          }}
+        }}
+      }
+    });
+    res.setHeader('Cache-Control','no-store');
+    res.json({products:products.map(p=>({
+      id:p.id,slug:p.slug,nameAr:p.nameAr,kind:p.kind,baseUnit:p.baseUnit,state:p.state,
+      originCountry:p.originCountry||'',originRegion:p.originRegion||'',grade:p.grade||'',
+      scentProfile:p.scentProfile||'',descriptionAr:p.descriptionAr||'',
+      projectionScore:p.projectionScore,longevityScore:p.longevityScore,
+      createdAt:p.createdAt,updatedAt:p.updatedAt,
+      availableBase:(p.balance?.onHandBase||new Prisma.Decimal(0))
+        .sub(p.balance?.reservedBase||new Prisma.Decimal(0)).toString(),
+      onHandBase:p.balance?.onHandBase.toString()||'0',
+      reorderPoint:p.balance?.reorderPoint.toString()||'0',
+      variants:p.variants.map(v=>({
+        id:v.id,sku:v.sku,labelAr:v.labelAr,quantityBase:v.quantityBase.toString(),
+        priceSar:v.priceSar.toFixed(2),compareAtPriceSar:v.compareAtPriceSar?.toFixed(2)||'',
+        active:v.active
+      })),
+      photos:p.media,
+      purchase:p.purchaseLines[0]?{
+        quantityBase:p.purchaseLines[0].quantityBase.toString(),
+        totalCostSar:p.purchaseLines[0].totalCostSar.toFixed(2),
+        receivedAt:p.purchaseLines[0].purchase.receivedAt,
+        invoiceReference:p.purchaseLines[0].purchase.invoiceReference,
+        supplierName:p.purchaseLines[0].purchase.supplier.name
+      }:null
+    }))});
+  }catch(e){next(e);}
+});
+
+// Draft photos require administrator authorization; public /media/:id remains unavailable.
+productIntakeRouter.get('/products/:id/photos/:mediaId',async(req,res,next)=>{
+  try{
+    const media=await prisma.productMedia.findFirst({
+      where:{id:req.params.mediaId,productId:req.params.id,kind:'PHOTO',
+        product:{isDemo:false}},
+      select:{driveFileId:true}
+    });
+    if(!media?.driveFileId){res.status(404).json({error:'الصورة غير موجودة.'});return;}
+    const data=await readImage(media.driveFileId);
+    res.setHeader('Content-Type',data.mime);
+    res.setHeader('Cache-Control','private,no-store');
+    res.setHeader('X-Content-Type-Options','nosniff');
+    res.send(data.bytes);
+  }catch(e){next(e);}
+});
+
+// Editing reviewable metadata or prices never adjusts accounting or inventory receipts.
+productIntakeRouter.patch('/products/:id/review',async(req,res,next)=>{
+  const parsed=reviewSchema.safeParse(req.body);
+  if(!parsed.success){
+    res.status(400).json({error:'راجع اسم المنتج والبيانات والأسعار. يجب أن يتجاوز سعر المقارنة سعر البيع.',
+      details:parsed.error.issues.map(issue=>({field:issue.path.join('.'),message:issue.message}))});
+    return;
+  }
+  try{
+    const result=await prisma.$transaction(async tx=>{
+      const product=await tx.product.findUnique({where:{id:req.params.id},select:{
+        id:true,state:true,isDemo:true,
+        variants:{select:{id:true}}
+      }});
+      if(!product||product.isDemo)throw new Error('NOT_FOUND');
+      if(product.state!=='DRAFT')throw new Error('MUST_UNPUBLISH');
+      const previousIds=product.variants.map(v=>v.id);
+      const requestedIds=parsed.data.variants.map(v=>v.id);
+      if(previousIds.length!==requestedIds.length||
+        requestedIds.some(id=>!previousIds.includes(id)))throw new Error('VARIANTS_CHANGED');
+      const {variants,...fields}=parsed.data;
+      await tx.product.update({where:{id:product.id},data:{
+        ...fields,originCountry:fields.originCountry||null,
+        originRegion:fields.originRegion||null,grade:fields.grade||null,
+        scentProfile:fields.scentProfile||null,descriptionAr:fields.descriptionAr||null
+      }});
+      for(const variant of variants){
+        await tx.productVariant.update({where:{id:variant.id},data:{
+          priceSar:new Prisma.Decimal(variant.priceSar),
+          compareAtPriceSar:variant.compareAtPriceSar?new Prisma.Decimal(variant.compareAtPriceSar):null
+        }});
+      }
+      await tx.auditLog.create({data:{
+        actorId:res.locals.adminId,entityType:'Product',entityId:product.id,
+        event:'PRODUCT_REVIEW_UPDATED',metadata:{changedFields:[
+          'nameAr','originCountry','originRegion','grade','scentProfile',
+          'descriptionAr','projectionScore','longevityScore','variantPrices'
+        ]}
+      }});
+      return product.id;
+    });
+    res.json({id:result,message:'تم حفظ تصحيحات المنتج. يظل بانتظار اعتماد المدير ولن يظهر للعملاء.'});
+  }catch(e){
+    if(e instanceof Error&&e.message==='NOT_FOUND'){res.status(404).json({error:'المنتج غير موجود.'});return;}
+    if(e instanceof Error&&e.message==='MUST_UNPUBLISH'){res.status(409).json({error:'أوقف نشر المنتج أولًا قبل تعديل بياناته وأسعاره.'});return;}
+    if(e instanceof Error&&e.message==='VARIANTS_CHANGED'){res.status(409).json({error:'تغيرت أحجام المنتج. أعد تحميل مراجعة المنتج.'});return;}
+    next(e);
+  }
+});
+
 productIntakeRouter.patch('/products/:id/publishing',async(req,res,next)=>{
-  const parsed=z.object({state:z.enum(['ACTIVE','DRAFT'])}).safeParse(req.body);
+  const parsed=z.object({state:z.enum(['ACTIVE','DRAFT']),confirmed:z.boolean().optional()}).safeParse(req.body);
   if(!parsed.success){res.status(400).json({error:'حالة النشر غير صحيحة.'});return;}
+  if(parsed.data.state==='ACTIVE'&&parsed.data.confirmed!==true){
+    res.status(400).json({error:'يجب مراجعة بيانات المنتج وأسعاره وصوره وتأكيد اعتماد النشر صراحةً.'});return;
+  }
   try{
     const p=await prisma.product.findUnique({
       where:{id:req.params.id},
@@ -224,11 +372,28 @@ productIntakeRouter.patch('/products/:id/publishing',async(req,res,next)=>{
         return;
       }
     }
-    const product=await prisma.product.update({
-      where:{id:p.id},
-      data:{state:parsed.data.state},
-      select:{id:true,state:true,slug:true}
+    if(parsed.data.state==='ACTIVE'&&p.state!=='DRAFT'){
+      res.status(409).json({error:'اعتماد النشر متاح للمنتجات التي تنتظر المراجعة فقط.'});return;
+    }
+    const product=await prisma.$transaction(async tx=>{
+      const updated=await tx.product.updateMany({
+        where:{id:p.id,state:p.state,isDemo:false},data:{state:parsed.data.state}
+      });
+      if(updated.count!==1)throw new Error('STATE_CHANGED');
+      await tx.auditLog.create({data:{
+        actorId:res.locals.adminId,entityType:'Product',entityId:p.id,
+        event:parsed.data.state==='ACTIVE'?'PRODUCT_APPROVED':'PRODUCT_UNPUBLISHED',
+        metadata:{previousState:p.state,newState:parsed.data.state}
+      }});
+      return tx.product.findUniqueOrThrow({
+        where:{id:p.id},select:{id:true,state:true,slug:true}
+      });
     });
     res.json({product,message:product.state==='ACTIVE'?'تم نشر المنتج في المتجر.':'تم إرجاع المنتج إلى المسودات.'});
-  }catch(err){next(err);}
+  }catch(err){
+    if(err instanceof Error&&err.message==='STATE_CHANGED'){
+      res.status(409).json({error:'تغيرت حالة المنتج أثناء الاعتماد؛ حدّث الصفحة.'});return;
+    }
+    next(err);
+  }
 });
