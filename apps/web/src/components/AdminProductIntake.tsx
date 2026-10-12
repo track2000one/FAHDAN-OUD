@@ -1,7 +1,7 @@
-import { useEffect, useState, type FormEvent } from 'react';
-import { CheckCircle2, CircleAlert, ImagePlus, PackagePlus, Plus, Save, ShieldCheck, Trash2 } from 'lucide-react';
+import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
+import { CheckCircle2, CircleAlert, ImagePlus, PackagePlus, Plus, Save, ShieldCheck, Trash2, UploadCloud, Images } from 'lucide-react';
 import {
-  createAdminProduct, getAdminProducts, setAdminProductPublishing,
+  createAdminProduct, getAdminProducts, setAdminProductPublishing, uploadAdminProductImage,
   type AdminProduct, type NewProductIntake, type NewProductVariant
 } from '../api';
 
@@ -26,6 +26,11 @@ function blank():NewProductIntake {
 }
 const units:Record<string,string>={GRAM:'جم',MILLILITER:'مل',PIECE:'قطعة'};
 const pretty=(n:number)=>new Intl.NumberFormat('ar-SA',{maximumFractionDigits:3}).format(n);
+const MAX_PHOTOS=12;
+const MAX_PHOTO_BYTES=6*1024*1024;
+const imageTypes=['image/jpeg','image/png','image/webp'];
+const fileKey=(file:File)=>file.name+'::'+file.size+'::'+file.lastModified;
+type CreatedProduct={id:string;name:string;slug:string};
 
 export function AdminProductIntake({token,revision,onUpdated}:{
   token:string;revision:number;onUpdated:()=>void
@@ -36,7 +41,11 @@ export function AdminProductIntake({token,revision,onUpdated}:{
   const [publishing,setPublishing]=useState('');
   const [error,setError]=useState('');
   const [notice,setNotice]=useState('');
-  const [created,setCreated]=useState<{name:string;slug:string}|null>(null);
+  const [created,setCreated]=useState<CreatedProduct|null>(null);
+  const [pendingUpload,setPendingUpload]=useState<CreatedProduct|null>(null);
+  const [photos,setPhotos]=useState<File[]>([]);
+  const [photoPreviews,setPhotoPreviews]=useState<string[]>([]);
+  const [uploadProgress,setUploadProgress]=useState<{done:number;total:number}|null>(null);
   const kind=kinds.find(k=>k.value===form.kind)||kinds[0];
   const unit=units[kind.unit];
   const setField=<K extends keyof NewProductIntake>(key:K,value:NewProductIntake[K])=>
@@ -51,16 +60,99 @@ export function AdminProductIntake({token,revision,onUpdated}:{
     return()=>{active=false;};
   },[token,revision]);
 
+  useEffect(()=>{
+    const urls=photos.map(file=>URL.createObjectURL(file));
+    setPhotoPreviews(urls);
+    return()=>{urls.forEach(url=>URL.revokeObjectURL(url));};
+  },[photos]);
+
+  function choosePhotos(e:ChangeEvent<HTMLInputElement>) {
+    const chosen=Array.from(e.currentTarget.files||[]);
+    e.currentTarget.value='';
+    if(!chosen.length)return;
+    setError('');
+    const invalid=chosen.find(file=>!imageTypes.includes(file.type)||file.size===0||file.size>MAX_PHOTO_BYTES);
+    if(invalid){
+      setError('الصورة «'+invalid.name+'» غير مدعومة. الصيغ JPG / PNG / WebP وبحجم أقصى 6 ميجابايت لكل صورة.');
+      return;
+    }
+    const known=new Set(photos.map(fileKey));
+    const unique=chosen.filter(file=>!known.has(fileKey(file))&&(known.add(fileKey(file)),true));
+    if(photos.length+unique.length>MAX_PHOTOS){
+      setError('يمكن اختيار 12 صورة كحد أقصى للمنتج؛ احذف بعض الصور ثم أعد الاختيار.');
+      return;
+    }
+    if(!unique.length){
+      setError('الصور المحددة موجودة بالفعل في قائمة الرفع.');
+      return;
+    }
+    setPhotos(previous=>[...previous,...unique]);
+  }
+
+  async function uploadToCreatedProduct(product:CreatedProduct,queue:File[]) {
+    if(!queue.length){
+      setPendingUpload(null);
+      setPhotos([]);
+      setNotice('تم تسجيل «'+product.name+'» كمسودة. يمكنك إضافة الصور لاحقًا من مكتبة Google Drive، ثم نشر المنتج.');
+      return;
+    }
+    setUploadProgress({done:0,total:queue.length});
+    const failures:{file:File;reason:string}[]=[];
+    let succeeded=0;
+    for(const file of queue){
+      try{
+        await uploadAdminProductImage(token,product.id,file);
+        succeeded++;
+      }catch(err){
+        failures.push({file,reason:err instanceof Error?err.message:'تعذر رفع الصورة'});
+      }
+      setUploadProgress({done:succeeded+failures.length,total:queue.length});
+    }
+    setUploadProgress(null);
+    setPhotos(failures.map(item=>item.file));
+    if(succeeded)onUpdated();
+    if(failures.length){
+      setPendingUpload(product);
+      setNotice('تم حفظ المنتج «'+product.name+'» كمسودة، ورفع '+succeeded+' من '+queue.length+' صورة.');
+      setError('تعذر رفع '+failures.length+' صورة: '+failures.map(f=>f.file.name+' ('+f.reason+')').join('، ')+'. يمكنك إعادة المحاولة دون إنشاء المنتج مرة أخرى.');
+    }else{
+      setPendingUpload(null);
+      setNotice('تم حفظ «'+product.name+'» كمسودة ورفع '+succeeded+' صورة إلى Google Drive بنجاح. يمكنك الآن نشره من قائمة المنتجات.');
+      setError('');
+    }
+  }
+
   async function submit(e:FormEvent<HTMLFormElement>) {
-    e.preventDefault();setBusy(true);setError('');setNotice('');setCreated(null);
+    e.preventDefault();
+    if(busy||pendingUpload)return;
+    setBusy(true);setError('');setNotice('');setCreated(null);
     try {
+      const queue=[...photos];
       const result=await createAdminProduct(token,form);
-      setNotice(result.message);
-      setCreated({name:result.product.nameAr,slug:result.product.slug});
+      const product={id:result.product.id,name:result.product.nameAr,slug:result.product.slug};
+      setCreated(product);
+      // Save the product and its stock only once. Photos are a separate,
+      // retryable step and never repeat inventory receipts.
       setForm(blank());
       onUpdated();
-    } catch(e) {setError(e instanceof Error?e.message:'تعذر تسجيل المنتج.');}
-    finally {setBusy(false);}
+      await uploadToCreatedProduct(product,queue);
+    } catch(e) {
+      setError(e instanceof Error?e.message:'تعذر تسجيل المنتج.');
+    } finally {setBusy(false);}
+  }
+
+  async function retryPhotos() {
+    if(!pendingUpload||busy)return;
+    setBusy(true);setError('');
+    try{await uploadToCreatedProduct(pendingUpload,[...photos]);}
+    finally{setBusy(false);}
+  }
+
+  function continueWithoutPhotos() {
+    if(!pendingUpload||busy)return;
+    const name=pendingUpload.name;
+    setPendingUpload(null);setPhotos([]);setError('');
+    setNotice('المنتج «'+name+'» محفوظ كمسودة. يمكنك رفع الصور المتبقية لاحقًا من مكتبة Google Drive.');
   }
 
   async function changePublishing(product:AdminProduct){
@@ -83,13 +175,28 @@ export function AdminProductIntake({token,revision,onUpdated}:{
     <p className="fahdan-intake-intro">سجّل بيانات العود والمورد والكمية والتكلفة الفعلية وأسعار الأحجام. ينشئ النظام سجل شراء ودفعة مخزون وحركة استلام، ويحفظ المنتج مسودةً إلى أن ترفع صورته وتنشره.</p>
     {notice&&<p className="fahdan-intake-alert success" role="status"><CheckCircle2 size={18}/>{notice}</p>}
     {error&&<p className="fahdan-intake-alert warning" role="alert"><CircleAlert size={18}/>{error}</p>}
-    {created&&<div className="fahdan-intake-next">
-      <ImagePlus size={19}/><span>تم إنشاء «{created.name}». يمكنك رفع عدة صور له إلى Google Drive، ثم نشره من قائمة المنتجات هنا.</span>
+    {created&&!pendingUpload&&<div className="fahdan-intake-next">
+      <ImagePlus size={19}/><span>تم إنشاء «{created.name}». الصور الناجحة مرتبطة بالمنتج، ويمكنك نشره من قائمة المنتجات أدناه بعد التحقق من اكتماله.</span>
       <button type="button" className="fahdan-intake-upload-link" onClick={()=>
         document.getElementById('fahdan-product-images')?.scrollIntoView({behavior:'smooth',block:'start'})
-      }><ImagePlus size={17}/> رفع صور المنتج</button>
+      }><ImagePlus size={17}/> إدارة صور المنتج</button>
     </div>}
-    <form className="fahdan-intake-form" onSubmit={submit}>
+    {pendingUpload?<div className="fahdan-intake-pending">
+      <h3><CircleAlert size={20}/> المنتج «{pendingUpload.name}» محفوظ بالفعل</h3>
+      <p>بقيت {photos.length} صورة لم تُرفع إلى Google Drive. إعادة المحاولة ترفع هذه الصور فقط دون إنشاء منتج أو استلام مخزون جديد.</p>
+      <div className="fahdan-inline-preview">
+        {photos.map((file,i)=><div key={fileKey(file)}>
+          {photoPreviews[i]&&<img src={photoPreviews[i]} alt={file.name}/>}
+          <small title={file.name}>{file.name}</small>
+        </div>)}
+      </div>
+      <div className="fahdan-intake-pending-actions">
+        <button type="button" className="button dark" disabled={busy} onClick={retryPhotos}>
+          <UploadCloud size={18}/>{busy?'جارٍ إعادة رفع الصور…':'إعادة رفع الصور المتبقية'}
+        </button>
+        <button type="button" disabled={busy} onClick={continueWithoutPhotos}>المتابعة دون الصور المتبقية</button>
+      </div>
+    </div>:<form className="fahdan-intake-form" onSubmit={submit}>
       <fieldset><legend>1. بيانات المنتج</legend>
         <div className="fahdan-intake-grid">
           <label>اسم المنتج بالعربية *
@@ -191,11 +298,42 @@ export function AdminProductIntake({token,revision,onUpdated}:{
           onClick={()=>setField('variants',[...form.variants,newVariant()])}><Plus size={16}/> إضافة حجم آخر</button>
         {kind.unit==='GRAM'&&<p className="fahdan-intake-hint">أحجام شائعة: 10، 20، 28 (أوقية)، 36، 50، 100، 125 (ثمن)، 250، 500، 1000 جم. أضف المتوفر فعليًا فقط.</p>}
       </fieldset>
+      <fieldset className="fahdan-intake-photo-step">
+        <legend>4. صور المنتج — Google Drive</legend>
+        <p className="fahdan-intake-hint">حدد صور المنتج الآن، وسيتم رفعها تلقائيًا بعد حفظ بيانات المنتج والمخزون. أول صورة يتم رفعها هي صورة الغلاف في المتجر.</p>
+        <label className="fahdan-inline-photo-picker">
+          <Images size={27}/>
+          <strong>اختيار صور المنتج (أكثر من صورة)</strong>
+          <span>JPG وPNG وWebP — حتى 6 ميجابايت للصورة — 12 صورة كحد أقصى</span>
+          <input type="file" multiple accept="image/jpeg,image/png,image/webp"
+            disabled={busy||photos.length>=MAX_PHOTOS}
+            onChange={choosePhotos}/>
+        </label>
+        {photos.length>0&&<>
+          <div className="fahdan-inline-photo-heading">
+            <strong>الصور المحددة ({photos.length} من {MAX_PHOTOS})</strong>
+            <button type="button" disabled={busy} onClick={()=>setPhotos([])}>إزالة جميع الصور</button>
+          </div>
+          <div className="fahdan-inline-preview">
+            {photos.map((file,i)=><div key={fileKey(file)}>
+              {photoPreviews[i]&&<img src={photoPreviews[i]} alt={file.name}/>}
+              <small title={file.name}>{file.name}</small>
+              <button type="button" disabled={busy} aria-label={`إزالة ${file.name}`}
+                onClick={()=>setPhotos(current=>current.filter(x=>fileKey(x)!==fileKey(file)))}><Trash2 size={16}/></button>
+            </div>)}
+          </div>
+        </>}
+        <p className="fahdan-intake-hint">يمكن حفظ المنتج دون صور كمسودة، وإضافتها لاحقًا من مكتبة الصور. النشر يتطلب صورة واحدة على الأقل.</p>
+      </fieldset>
+      {uploadProgress&&<div className="fahdan-inline-upload-progress" role="status">
+        <span>جارٍ رفع الصور: {uploadProgress.done} من {uploadProgress.total} مكتملة</span>
+        <progress value={uploadProgress.done} max={uploadProgress.total}/>
+      </div>}
       <div className="fahdan-intake-footer">
-        <p><ShieldCheck size={17}/> يحفظ الصنف مسودة، ولا يظهر للعملاء حتى ترفع صورته وتضغط «نشر».</p>
-        <button className="button dark" type="submit" disabled={busy}><Save size={18}/>{busy?'جارٍ تسجيل الشراء…':'حفظ المنتج واستلام المخزون'}</button>
+        <p><ShieldCheck size={17}/> حفظ المنتج أولًا، ثم رفع {photos.length} {photos.length===1?'صورة':'صور'} تلقائيًا، دون نشر المنتج قبل اعتمادك.</p>
+        <button className="button dark" type="submit" disabled={busy}><Save size={18}/>{busy?'جارٍ الحفظ ورفع الصور…':'حفظ المنتج ورفع الصور'}</button>
       </div>
-    </form>
+    </form>}
     <div className="fahdan-intake-existing">
       <div className="panel-heading"><h3>المنتجات المسجلة وحالة النشر</h3><span>{products.length} أصناف</span></div>
       {!products.length?<p className="fahdan-intake-hint">لم تُسجّل أصناف فعلية بعد.</p>:<div className="fahdan-intake-product-list">
