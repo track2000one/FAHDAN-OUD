@@ -59,7 +59,8 @@ export function AdminProductReview({token,revision,onUpdated}:{
       if(!live)return;
       setProducts(data.products);
       setSelectedId(previous=>data.products.some(p=>p.id===previous)?previous:
-        data.products.find(p=>p.state==='DRAFT')?.id||data.products[0]?.id||'');
+        (filter==='pending'?data.products.find(p=>p.state==='DRAFT')?.id:
+          filter==='published'?data.products.find(p=>p.state==='ACTIVE')?.id:data.products[0]?.id)||'');
     }).catch(err=>{if(live)setError(err instanceof Error?err.message:'تعذر تحميل المنتجات للمراجعة.');})
       .finally(()=>{if(live)setLoading(false);});
     return()=>{live=false;};
@@ -144,13 +145,13 @@ export function AdminProductReview({token,revision,onUpdated}:{
     </div>
     <p className="fahdan-review-intro">كل منتج يُسجَّل أولًا كمسودة داخل لوحة الإدارة. لا يظهر في الصفحة الرئيسية أو صفحة المنتج أو السلة العامة حتى يراجعه المدير ويضغط «اعتماد ونشر المنتج».</p>
     <div className="fahdan-review-stats">
-      <button className={filter==='pending'?'selected':''} onClick={()=>setFilter('pending')}>
+      <button className={filter==='pending'?'selected':''} onClick={()=>{setFilter('pending');setSelectedId(products.find(p=>p.state==='DRAFT')?.id||'');}}>
         <span>بانتظار الاعتماد</span><strong>{counts.pending}</strong>
       </button>
-      <button className={filter==='published'?'selected':''} onClick={()=>setFilter('published')}>
+      <button className={filter==='published'?'selected':''} onClick={()=>{setFilter('published');setSelectedId(products.find(p=>p.state==='ACTIVE')?.id||'');}}>
         <span>معتمدة ومنشورة</span><strong>{counts.published}</strong>
       </button>
-      <button className={filter==='all'?'selected':''} onClick={()=>setFilter('all')}>
+      <button className={filter==='all'?'selected':''} onClick={()=>{setFilter('all');setSelectedId(products[0]?.id||'');}}>
         <span>جميع المنتجات</span><strong>{products.length}</strong>
       </button>
     </div>
@@ -169,7 +170,7 @@ export function AdminProductReview({token,revision,onUpdated}:{
             </button>
           ):<p className="fahdan-review-empty">لا توجد منتجات ضمن هذا التصنيف.</p>}
         </nav>
-        {selected&&form?<div className="fahdan-review-details" key={selected.id}>
+        {selected&&listed.some(p=>p.id===selected.id)&&form?<div className="fahdan-review-details" key={selected.id}>
           <div className="fahdan-review-heading"><div>
             <h3>{selected.nameAr}</h3>
             <small>رمز المنتج: {selected.slug} — أُضيف بتاريخ {day(selected.createdAt)}</small>
