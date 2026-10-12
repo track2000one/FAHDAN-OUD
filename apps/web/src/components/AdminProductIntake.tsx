@@ -190,6 +190,10 @@ export function AdminProductIntake({token,revision,onUpdated}:{
           <small title={file.name}>{file.name}</small>
         </div>)}
       </div>
+      {uploadProgress&&<div className="fahdan-inline-upload-progress" role="status">
+        <span>جارٍ إعادة الرفع: {uploadProgress.done} من {uploadProgress.total} مكتملة</span>
+        <progress value={uploadProgress.done} max={uploadProgress.total}/>
+      </div>}
       <div className="fahdan-intake-pending-actions">
         <button type="button" className="button dark" disabled={busy} onClick={retryPhotos}>
           <UploadCloud size={18}/>{busy?'جارٍ إعادة رفع الصور…':'إعادة رفع الصور المتبقية'}
@@ -197,7 +201,7 @@ export function AdminProductIntake({token,revision,onUpdated}:{
         <button type="button" disabled={busy} onClick={continueWithoutPhotos}>المتابعة دون الصور المتبقية</button>
       </div>
     </div>:<form className="fahdan-intake-form" onSubmit={submit}>
-      <fieldset><legend>1. بيانات المنتج</legend>
+      <fieldset disabled={busy}><legend>1. بيانات المنتج</legend>
         <div className="fahdan-intake-grid">
           <label>اسم المنتج بالعربية *
             <input required minLength={3} maxLength={140} value={form.nameAr}
@@ -240,7 +244,7 @@ export function AdminProductIntake({token,revision,onUpdated}:{
           </label>
         </div>
       </fieldset>
-      <fieldset><legend>2. استلام المستودع وتكلفة الشراء</legend>
+      <fieldset disabled={busy}><legend>2. استلام المستودع وتكلفة الشراء</legend>
         <p className="fahdan-intake-hint">أدخل بيانات شراء فعلية فقط. جميع التكاليف لا تظهر للعملاء. وحدة المخزون لهذا القسم: <b>{unit}</b>.</p>
         <div className="fahdan-intake-grid">
           <label>اسم المورد *
@@ -273,7 +277,7 @@ export function AdminProductIntake({token,revision,onUpdated}:{
         </div>
         <small>تكلفة الشراء المدخلة تشمل أي مصاريف مخصصة للمنتج مثل النقل والرسوم؛ لا تضف المصاريف مرتين.</small>
       </fieldset>
-      <fieldset><legend>3. أحجام البيع وأسعارها</legend>
+      <fieldset disabled={busy}><legend>3. أحجام البيع وأسعارها</legend>
         <p className="fahdan-intake-hint">أدخل سعرًا فعليًا لكل حجم تريد بيعه. لا تُنشئ المنصة سعرًا تلقائيًا من تكلفة الشراء.</p>
         <div className="fahdan-intake-variants">
           {form.variants.map((v,i)=><div className="fahdan-intake-variant" key={i}>
@@ -298,7 +302,7 @@ export function AdminProductIntake({token,revision,onUpdated}:{
           onClick={()=>setField('variants',[...form.variants,newVariant()])}><Plus size={16}/> إضافة حجم آخر</button>
         {kind.unit==='GRAM'&&<p className="fahdan-intake-hint">أحجام شائعة: 10، 20، 28 (أوقية)، 36، 50، 100، 125 (ثمن)، 250، 500، 1000 جم. أضف المتوفر فعليًا فقط.</p>}
       </fieldset>
-      <fieldset className="fahdan-intake-photo-step">
+      <fieldset className="fahdan-intake-photo-step" disabled={busy}>
         <legend>4. صور المنتج — Google Drive</legend>
         <p className="fahdan-intake-hint">حدد صور المنتج الآن، وسيتم رفعها تلقائيًا بعد حفظ بيانات المنتج والمخزون. أول صورة يتم رفعها هي صورة الغلاف في المتجر.</p>
         <label className="fahdan-inline-photo-picker">
