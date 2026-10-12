@@ -65,8 +65,9 @@ adminRouter.post('/products/:productId/images', raw({ type: ['image/jpeg','image
     if (!Buffer.isBuffer(req.body) || !isImage(req.body, mime)) {
       res.status(400).json({error:'اختر صورة JPG أو PNG أو WEBP لا تتجاوز 6 ميجابايت.'}); return;
     }
-    const product = await prisma.product.findUnique({where:{id:req.params.productId},select:{id:true,nameAr:true,isDemo:true}});
+    const product = await prisma.product.findUnique({where:{id:req.params.productId},select:{id:true,nameAr:true,isDemo:true,state:true}});
     if (!product || product.isDemo) {res.status(404).json({error:'المنتج الفعلي غير موجود.'});return;}
+    if(product.state!=='DRAFT') {res.status(409).json({error:'أوقف نشر المنتج قبل إضافة صور جديدة، ثم أعد اعتماد المنتج.'});return;}
     // Images are uploaded one at a time by the multi-select UI. Enforce the
     // total count on the server, not just in the browser.
     const existingCount = await prisma.productMedia.count({where:{productId:product.id,kind:'PHOTO'}});
