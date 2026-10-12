@@ -486,3 +486,50 @@ border:2px dashed #b8cab8;border-radius:12px;padding:24px 15px;background:#f7faf
 @media(max-width:540px){.fahdan-review-stats{grid-template-columns:1fr 1fr}.fahdan-review-stats button:last-child{grid-column:1/-1}
 .fahdan-review-fields,.fahdan-review-variant{grid-template-columns:1fr}.fahdan-review-stock{grid-template-columns:1fr 1fr}
 .fahdan-review-stock>div:last-child{grid-column:1/-1}.fahdan-review-details{padding:13px}.fahdan-review-approval{padding:14px}}
+
+
+/* Product stock history, verified stock movements and image gallery management */
+.fahdan-product-photo-manager{align-items:start;flex-wrap:wrap}
+.fahdan-product-photo-tile{display:grid;gap:8px;justify-items:center;background:#fafbf8;border:1px solid #e3e8df;border-radius:11px;padding:10px;min-width:132px}
+.fahdan-product-photo-tile .fahdan-review-photo{width:112px;min-width:112px;height:112px}
+.fahdan-product-photo-tile>small{color:#3a5946;font-size:11px;font-weight:700;line-height:1.5;text-align:center}
+.fahdan-product-photo-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:5px}
+.fahdan-product-photo-actions button{display:grid;place-items:center;cursor:pointer;width:28px;height:28px;background:#fff;border:1px solid #d8e1d5;border-radius:7px;color:#366342}
+.fahdan-product-photo-actions button.danger{color:#aa4639;background:#fff4ef;border-color:#f1d7cf}
+.fahdan-product-photo-actions button:hover{background:#edf5e9}
+.fahdan-product-photo-actions button:disabled{opacity:.45;cursor:not-allowed}
+.fahdan-review-photo-hint{font-size:11px;line-height:1.8;color:#778879;margin:-6px 0 19px}
+.fahdan-stock-manager{margin-top:24px;padding:20px;border:1px solid #dae6d9;border-radius:14px;background:#fbfcf8}
+.fahdan-stock-manager-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.fahdan-stock-manager-heading h4{display:flex;align-items:center;gap:8px;font-size:17px;margin:0;color:#2a4b37}
+.fahdan-stock-manager-heading>button{display:flex;align-items:center;gap:6px;padding:9px 13px;background:#e9f1e7;color:#31523b;border:1px solid #d8e6d3;border-radius:8px;font:inherit;font-size:12px;cursor:pointer}
+.fahdan-stock-manager>p{font-size:12px;line-height:1.9;color:#637c68}
+.fahdan-stock-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:18px 0}
+.fahdan-stock-summary>div{background:white;border:1px solid #e3e7df;border-radius:10px;display:grid;gap:9px;padding:14px}
+.fahdan-stock-summary small{color:#6c7b6e;font-size:11px}
+.fahdan-stock-summary strong{font-size:17px;color:#2a4937}
+.fahdan-stock-switch{display:flex;gap:7px;border-bottom:1px solid #dde8dd;padding-bottom:11px;flex-wrap:wrap;margin:20px 0}
+.fahdan-stock-switch button{border:1px solid #d9e4d8;border-radius:9px;background:#fff;color:#4b6954;padding:11px 15px;display:flex;align-items:center;gap:7px;font:inherit;font-size:12px;cursor:pointer}
+.fahdan-stock-switch button.active{background:#244635;border-color:#244635;color:#fff}
+.fahdan-stock-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin:16px 0 22px}
+.fahdan-stock-form>label{display:grid;gap:7px;font-size:12px;color:#355941;font-weight:650;min-width:0}
+.fahdan-stock-form>label.full{grid-column:1/-1}
+.fahdan-stock-form input,.fahdan-stock-form textarea,.fahdan-stock-form select{border:1px solid #dbe1d7;background:white;border-radius:8px;font:inherit;color:#284535;font-size:13px;padding:11px;min-width:0;width:100%;box-sizing:border-box}
+.fahdan-stock-form input:focus,.fahdan-stock-form textarea:focus{outline:2px solid #b6cbb2}
+.fahdan-stock-form-footer{grid-column:1/-1;display:flex;align-items:center;flex-wrap:wrap;gap:10px;color:#677d6c;font-size:11px;line-height:1.8}
+.fahdan-stock-form-footer>button{margin-inline-start:auto;background:#264a34;color:#fff;font:inherit;font-size:12px;font-weight:700;cursor:pointer;border:0;border-radius:8px;padding:12px 16px}
+.fahdan-stock-form-footer>button:disabled{opacity:.5;cursor:not-allowed}
+.fahdan-stock-message{display:flex;align-items:start;gap:8px;padding:12px;font-size:12px;line-height:1.8;border-radius:9px}
+.fahdan-stock-message.success{background:#e6f3e8;color:#2b6941}
+.fahdan-stock-message.error{background:#fff0e9;color:#924734}
+.fahdan-stock-history{margin-top:22px;border-top:1px solid #e1e8de;padding-top:14px}
+.fahdan-stock-history>h5{font-size:13px;color:#32523e;margin:5px 0 12px}
+.fahdan-stock-history>p{font-size:12px;color:#7d897b}
+.fahdan-stock-table-wrap{overflow-x:auto;max-width:100%}
+.fahdan-stock-history table{min-width:550px;width:100%;border-collapse:collapse;text-align:right}
+.fahdan-stock-history th{font-size:11px;color:#788878;background:#f2f6ef;padding:10px}
+.fahdan-stock-history td{border-top:1px solid #edf0e9;padding:11px 10px;font-size:12px;color:#455f4a}
+@media(max-width:700px){.fahdan-stock-summary{grid-template-columns:1fr 1fr}
+.fahdan-stock-summary>div:last-child{grid-column:1/-1}.fahdan-stock-form{grid-template-columns:1fr}
+.fahdan-stock-manager{padding:13px}.fahdan-stock-form-footer>button{width:100%}
+.fahdan-product-photo-tile{min-width:107px}.fahdan-product-photo-tile .fahdan-review-photo{width:100px;min-width:100px;height:100px}}
