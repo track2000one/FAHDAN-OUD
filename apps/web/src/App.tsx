@@ -5,6 +5,7 @@ import { customerMe, getCatalog, getDashboard, signIn, type Customer } from './a
 import { ProductArt } from './components/ProductArt';
 import { AdminWarehouse } from './components/AdminWarehouse';
 import { AdminProductIntake } from './components/AdminProductIntake';
+import { AdminProductReview } from './components/AdminProductReview';
 import { AdminOrders } from './components/AdminOrders';
 import { CustomerAccount } from './components/CustomerAccount';
 import { CustomerDashboard } from './components/CustomerDashboard';
@@ -170,6 +171,7 @@ function Admin() {
   return <main className="container admin-wrap"><div className="admin-heading"><div><span className="section-kicker">نظام فهدان الداخلي</span><h1><LayoutDashboard/> لوحة إدارة المتجر</h1><p>مؤشرات مرتبطة بقاعدة البيانات وليست أرقامًا تقديرية.</p></div><button className="button light" onClick={logout}>تسجيل الخروج <ArrowRight size={16}/></button></div>
     {!dashboard?<div className="admin-loading">جارٍ قراءة المؤشرات من قاعدة البيانات…</div>:<><div className="admin-stats"><div><span>المنتجات الفعلية</span><strong>{whole(dashboard.totalProducts)}</strong><small>لا تشمل منتجات العرض التجريبية</small></div><div><span>الطلبات قيد المتابعة</span><strong>{whole(dashboard.openOrders)}</strong><small>قبل الإرسال أو الإكمال</small></div><div><span>الطلبات المدفوعة</span><strong>{whole(dashboard.paidOrders)}</strong><small>بحسب الحالات المسجلة</small></div><div><span>إجمالي المبيعات المدفوعة*</span><strong>{sar(dashboard.grossSalesSar)}</strong><small>ليس صافي الربح</small></div></div>
       <div className="admin-panels"><div className="admin-panel"><div className="panel-heading"><h2>تنبيهات المخزون</h2><span>{whole(dashboard.lowStock.length)} أصناف</span></div>{dashboard.lowStock.length?dashboard.lowStock.map((item,i)=><p key={i} className="stock-warning"><Box size={17}/> {item.name} — المتاح {whole(item.available)} {item.unit==='PIECE'?'قطعة':'وحدة أساسية'} (الحد {whole(item.threshold)})</p>):<div className="panel-empty"><Check size={27}/> لا توجد تنبيهات مخزون في الأصناف الفعلية حاليًا.</div>}</div><div className="admin-panel"><div className="panel-heading"><h2>وحدات الإدارة القادمة</h2><Sparkles size={18}/></div><ul className="roadmap-list"><li><Check size={16}/> دليل المنتجات والأوزان</li><li><Check size={16}/> تسجيل الموردين ودفعات الشراء</li><li><Check size={16}/> حركة المخزون وحجز الكميات</li><li><Check size={16}/> الطلبات والشحن والمدفوعات</li><li><Check size={16}/> تقارير الأرباح والمديونيات</li></ul><p className="panel-disclaimer">النماذج مهيأة في قاعدة البيانات؛ شاشات الإدخال والمعالجة المحاسبية لم تُنفذ بعد.</p></div></div></>}
+    <AdminProductReview token={token} revision={revision} onUpdated={refreshProducts}/>
     <AdminProductIntake token={token} revision={revision} onUpdated={refreshProducts}/>
     <AdminWarehouse token={token} revision={revision} onUpdated={refreshProducts}/>
     <AdminOrders token={token}/>
@@ -177,7 +179,7 @@ function Admin() {
 }
 function Footer(){return <footer className="footer"><div className="container footer-main"><div><Brand inverse/><p>تجربة عصرية تنطلق من أصالة العود والبخور، وتمنح التفاصيل مكانتها.</p></div><div><h3>تصفح فهدان</h3><Link to="/">الرئيسية</Link><Link to="/#products">المنتجات</Link><Link to="/account">حسابي</Link></div><div><h3>معلومات المتجر</h3><span>التواصل: يحدد لاحقًا</span><span>الشحن: تحت الإعداد</span><span>الدفع: غير مفعل</span></div><div className="footer-letter"><span>FAHDAN</span><strong>للطيب حكاية</strong></div></div><div className="footer-bottom container"><span>© فهدان للعود — نسخة تطويرية 2026</span><span>بُنيت بعناية لتكبر مع فهدان</span></div></footer>}
 export default function App(){
-  const [products,setProducts]=useState<Product[]>(demoProducts),[categories,setCategories]=useState(fallbackCategories),[connected,setConnected]=useState(false);
+  const [products,setProducts]=useState<Product[]>(import.meta.env.PROD?[]:demoProducts),[categories,setCategories]=useState(fallbackCategories),[connected,setConnected]=useState(false);
   const [cart,setCart]=useState<CartLine[]>(readCart),[cartOpen,setCartOpen]=useState(false),[toast,setToast]=useState('');
   const [customer,setCustomer] = useState<Customer|null>(null);
   const [customerLoading,setCustomerLoading] = useState(()=>Boolean(sessionStorage.getItem(CUSTOMER_SESSION_KEY)));
