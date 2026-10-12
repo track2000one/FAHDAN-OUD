@@ -16,6 +16,7 @@ export async function requireOwner(req: Request, res: Response, next: NextFuncti
       res.status(403).json({ error: 'ليس لديك صلاحية للوصول.' });
       return;
     }
+    res.locals.adminId = decoded.sub;
     next();
   } catch {
     res.status(401).json({ error: 'انتهت الجلسة أو أن بيانات الدخول غير صحيحة.' });
