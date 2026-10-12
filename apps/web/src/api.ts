@@ -3,10 +3,25 @@ import { demoProducts, fallbackCategories } from './demo';
 const base = (import.meta.env.VITE_API_BASE || '').replace(/\/$/, '');
 const endpoint = (path:string) => `${base}/api/v1${path}`;
 
+export type ProductIntakeIssue = {field:string;label:string;message:string};
+export class ProductIntakeValidationError extends Error {
+  constructor(message:string,public issues:ProductIntakeIssue[]){
+    super(message);
+    this.name='ProductIntakeValidationError';
+  }
+}
 async function request<T>(path:string, options?:RequestInit):Promise<T> {
   const response = await fetch(endpoint(path), { ...options, headers:{ 'Content-Type':'application/json', ...options?.headers } });
   const body = await response.json();
-  if (!response.ok) throw new Error(body?.error || `HTTP ${response.status}`);
+  if (!response.ok) {
+    if(path==='/admin/products' && Array.isArray(body?.validationErrors)) {
+      throw new ProductIntakeValidationError(
+        body.error || 'تحقق من بيانات المنتج.',
+        body.validationErrors as ProductIntakeIssue[]
+      );
+    }
+    throw new Error(body?.error || `HTTP ${response.status}`);
+  }
   return body as T;
 }
 export async function getCatalog(): Promise<{ products:Product[]; categories:{slug:string;nameAr:string}[]; connected:boolean }> {
