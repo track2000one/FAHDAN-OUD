@@ -203,7 +203,7 @@ productIntakeRouter.post('/products',async(req,res,next)=>{
 });
 
 
-const reviewMoney=z.string().trim().regex(/^\\d{1,10}(?:\\.\\d{1,2})?$/)
+const reviewMoney=z.string().trim().regex(/^\d{1,10}(?:\.\d{1,2})?$/)
   .refine(value=>new Prisma.Decimal(value).gt(0),'يجب إدخال سعر موجب بمنزلتين عشريتين');
 const reviewSchema=z.object({
   nameAr:z.string().trim().min(3).max(140),
