@@ -14,6 +14,7 @@ import { accountRouter } from './routes/account.js';
 import { checkoutRouter } from './routes/checkout.js';
 import { adminRouter } from './routes/admin.js';
 import { productIntakeRouter } from './routes/product-intake.js';
+import { productManagementRouter } from './routes/product-management.js';
 import { mediaRouter } from './routes/media.js';
 
 const envSchema = z.object({
@@ -57,6 +58,7 @@ app.use('/api/v1/customer', rateLimit({ windowMs: 15 * 60 * 1000, limit: 15, sta
 app.use('/api/v1/account', accountRouter);
 app.use('/api/v1/checkout', checkoutRouter);
 app.use('/api/v1/admin', productIntakeRouter);
+app.use('/api/v1/admin/manage', productManagementRouter);
 app.use('/api/v1/admin', adminRouter);
 app.use('/api', (_req, res) => res.status(404).json({ error: 'المسار غير موجود.' }));
 
