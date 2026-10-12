@@ -60,8 +60,12 @@ const intakeSchema=z.object({
     if(v.compareAtPriceSar && new Prisma.Decimal(v.compareAtPriceSar).lte(new Prisma.Decimal(v.priceSar)))
       ctx.addIssue({code:'custom',path:['variants',i,'compareAtPriceSar'],message:'السعر قبل الخصم يجب أن يتجاوز السعر الحالي'});
   }
-  if(!value.variants.some(v=>new Prisma.Decimal(v.quantity).lte(new Prisma.Decimal(value.stockQuantity))))
-    ctx.addIssue({code:'custom',path:['variants'],message:'أضف حجمًا واحدًا على الأقل لا يتجاوز الرصيد'});
+  if(!value.variants.some(v=>new Prisma.Decimal(v.quantity).lte(new Prisma.Decimal(value.stockQuantity)))) {
+    const unit=categories[value.kind].baseUnit==='GRAM'?'غرام':
+      categories[value.kind].baseUnit==='MILLILITER'?'ملليلتر':'قطعة';
+    ctx.addIssue({code:'custom',path:['variants'],message:
+      `حجم البيع يجب ألا يتجاوز المخزون المسجل (${value.stockQuantity} ${unit}). تأكد من إدخال الكمية بوحدة القياس الصحيحة.`});
+  }
   const expected=categories[value.kind].baseUnit;
   if(expected==='PIECE' && (new Prisma.Decimal(value.stockQuantity).mod(1).gt(0) ||
      value.variants.some(v=>new Prisma.Decimal(v.quantity).mod(1).gt(0))))
@@ -77,10 +81,42 @@ function label(q:Prisma.Decimal,unit:BaseUnit):string{
   return named[val]||val+' جم';
 }
 
+const intakeFieldNames:Record<string,string>={
+  code:'رمز الصنف',nameAr:'اسم المنتج بالعربية',kind:'قسم المنتج',
+  originCountry:'بلد المنشأ',originRegion:'منطقة المنشأ',grade:'الدرجة',
+  scentProfile:'وصف الرائحة',descriptionAr:'وصف المنتج',
+  projectionScore:'قوة الفوحان',longevityScore:'مستوى الثبات',
+  supplierName:'اسم المورد',supplierContact:'بيانات التواصل مع المورد',
+  receivedAt:'تاريخ استلام المخزون',invoiceReference:'مرجع فاتورة الشراء',
+  stockQuantity:'الكمية المشتراة',landedCostSar:'إجمالي تكلفة الشراء',
+  reorderPoint:'حد تنبيه قرب النفاد',variants:'أحجام البيع'
+};
+const variantFieldNames:Record<string,string>={
+  quantity:'الحجم',priceSar:'سعر البيع',compareAtPriceSar:'السعر قبل الخصم'
+};
+function explainIntakeIssue(issue:z.ZodIssue){
+  const parts=issue.path.map(String);
+  const field=parts.join('.');
+  const inVariant=parts[0]==='variants'&&/^\\d+$/.test(parts[1]||'');
+  const label=inVariant?
+    `حجم البيع رقم ${Number(parts[1])+1} — ${variantFieldNames[parts[2]]||'البيانات'}`:
+    intakeFieldNames[parts[0]]||'بيانات المنتج';
+  let detail=issue.message;
+  if(issue.code==='invalid_type')detail='القيمة المطلوبة غير مدخلة أو ليست من النوع الصحيح.';
+  else if(issue.code==='too_small')detail='القيمة أصغر من الحد الأدنى المطلوب.';
+  else if(issue.code==='too_big')detail='القيمة تتجاوز الحد المسموح.';
+  else if(!/[\\u0600-\\u06FF]/.test(detail))detail='البيانات غير صالحة؛ راجع القيمة المدخلة.';
+  return {field,label,message:`${label}: ${detail}`};
+}
+
 productIntakeRouter.post('/products',async(req,res,next)=>{
   const parsed=intakeSchema.safeParse(req.body);
   if(!parsed.success){
-    res.status(400).json({error:'تحقق من اسم المنتج، رمز الصنف، تكلفة الشراء، الأرصدة والأسعار والأحجام المدخلة.'});
+    const errors=parsed.error.issues.map(explainIntakeIssue);
+    res.status(400).json({
+      error:'تعذر حفظ المنتج. راجع الحقول المحددة أدناه ثم أعد المحاولة.',
+      validationErrors:errors
+    });
     return;
   }
   const d=parsed.data,details=categories[d.kind],unit=details.baseUnit;
