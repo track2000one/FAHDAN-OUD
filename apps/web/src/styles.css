@@ -362,3 +362,32 @@
 .fahdan-intake-upload-link{display:inline-flex;align-items:center;gap:7px;border:1px solid #8cac8c;border-radius:8px;background:#244634;color:#fff;padding:10px 14px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
 .fahdan-intake-upload-link:hover{background:#315840}
 #fahdan-product-images{scroll-margin-top:28px}
+
+
+/* Unified inventory intake + automated Google Drive photo uploads */
+.fahdan-intake-photo-step{background:#f8faf6!important}
+.fahdan-inline-photo-picker{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:11px;text-align:center;
+border:2px dashed #b8cab8;border-radius:12px;padding:24px 15px;background:#f7faf5;cursor:pointer;color:#315641}
+.fahdan-inline-photo-picker>svg{color:#b99b6b}
+.fahdan-inline-photo-picker strong{font-size:14px}
+.fahdan-inline-photo-picker span{font-size:12px;color:#75877a;line-height:1.7}
+.fahdan-inline-photo-picker input{max-width:100%;font-size:12px}
+.fahdan-inline-photo-picker input:disabled{opacity:.55;cursor:not-allowed}
+.fahdan-inline-photo-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:18px 0 12px}
+.fahdan-inline-photo-heading strong{font-size:13px;color:#32583f}
+.fahdan-inline-photo-heading button{background:transparent;border:0;color:#97513b;font:inherit;font-size:12px;cursor:pointer}
+.fahdan-inline-preview{display:grid;grid-template-columns:repeat(auto-fill,minmax(115px,1fr));gap:12px;margin:14px 0}
+.fahdan-inline-preview>div{display:flex;position:relative;flex-direction:column;gap:5px;min-width:0}
+.fahdan-inline-preview img{width:100%;height:108px;object-fit:cover;border:1px solid #dae2d5;border-radius:9px}
+.fahdan-inline-preview small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#637666;font-size:11px}
+.fahdan-inline-preview button{position:absolute;top:7px;left:7px;background:#fffdf8;color:#a54d38;border:1px solid #e3d4ce;border-radius:7px;width:30px;height:30px;display:grid;place-items:center;cursor:pointer}
+.fahdan-inline-upload-progress{display:grid;gap:10px;color:#375a40;font-size:13px;line-height:1.8}
+.fahdan-inline-upload-progress progress{accent-color:#2f7148;width:100%;max-width:520px;height:13px}
+.fahdan-intake-pending{border:1px solid #e1d9bb;border-radius:13px;background:#fffaf1;padding:25px;margin:20px 0}
+.fahdan-intake-pending h3{display:flex;align-items:center;gap:9px;font-size:18px;color:#664a28;margin:0 0 12px}
+.fahdan-intake-pending p{font-size:13px;color:#78694d;line-height:1.9}
+.fahdan-intake-pending-actions{display:flex;align-items:center;gap:13px;flex-wrap:wrap}
+.fahdan-intake-pending-actions .button{display:inline-flex;align-items:center;gap:9px}
+.fahdan-intake-pending-actions>button:not(.button){font:inherit;font-size:12px;color:#705b40;background:transparent;border:0;text-decoration:underline;cursor:pointer}
+.fahdan-intake-pending-actions>button:disabled{opacity:.5;cursor:not-allowed}
+@media(max-width:620px){.fahdan-inline-preview{grid-template-columns:repeat(2,minmax(0,1fr))}.fahdan-intake-pending{padding:16px}.fahdan-inline-photo-picker{padding:18px 10px}}
