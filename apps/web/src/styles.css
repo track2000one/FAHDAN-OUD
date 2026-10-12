@@ -406,3 +406,83 @@ border:2px dashed #b8cab8;border-radius:12px;padding:24px 15px;background:#f7faf
 .fahdan-intake-form [aria-invalid="true"]{border:2px solid #c5533d!important;background:#fff7f2!important;
   box-shadow:0 0 0 2px #c5533d18}
 .fahdan-intake-form [aria-invalid="true"]:focus{outline:2px solid #bd7863}
+
+
+/* Owner-only product review and publication gate */
+.fahdan-review-panel{margin:26px 0}
+.fahdan-review-panel .panel-heading h2{display:flex;align-items:center;gap:10px}
+.fahdan-review-refresh{border:1px solid #d9e4d9;background:#f5f8f3;color:#31563c;
+  padding:10px 13px;border-radius:8px;display:inline-flex;align-items:center;gap:7px;font:inherit;font-size:12px;cursor:pointer}
+.fahdan-review-intro{font-size:13px;color:#64776a;line-height:1.95;margin:0 0 20px}
+.fahdan-review-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:20px}
+.fahdan-review-stats button{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid #e1e6dd;
+  background:#fcfbf7;border-radius:12px;padding:15px 18px;color:#587361;font:inherit;font-size:13px;cursor:pointer;text-align:right}
+.fahdan-review-stats button strong{font-size:23px;color:#244734}
+.fahdan-review-stats button.selected{background:#eaf2e9;border-color:#9bb59b}
+.fahdan-review-stats button:focus-visible{outline:2px solid #2c6844}
+.fahdan-review-layout{display:grid;grid-template-columns:260px minmax(0,1fr);gap:17px;align-items:start}
+.fahdan-review-list{border:1px solid #e6e7dd;border-radius:13px;background:#faf9f4;padding:10px;display:grid;gap:7px;max-height:680px;overflow:auto}
+.fahdan-review-list>button{display:grid;gap:8px;text-align:right;border:1px solid transparent;background:transparent;
+  border-radius:10px;padding:13px;color:#2b4635;font:inherit;cursor:pointer}
+.fahdan-review-list>button.selected{border-color:#a1bba1;background:#e9f2e8}
+.fahdan-review-list strong{font-size:13px}.fahdan-review-list small{font-size:11px;color:#778377;line-height:1.5}
+.fahdan-review-list span{font-size:11px;justify-self:start;border-radius:15px;padding:5px 10px}
+.fahdan-review-list .pending,.fahdan-review-heading .pending{background:#f9edda;color:#866330}
+.fahdan-review-list .published,.fahdan-review-heading .published{background:#e2f1e4;color:#296a3b}
+.fahdan-review-details{border:1px solid #e3e7df;background:#fffdf9;border-radius:13px;padding:22px;min-width:0}
+.fahdan-review-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;border-bottom:1px solid #e7e8de;padding-bottom:16px}
+.fahdan-review-heading h3{font-size:20px;color:#254231;margin:0 0 6px}
+.fahdan-review-heading small{font-size:11px;color:#7d887c}
+.fahdan-review-heading>span{font-size:12px;border-radius:18px;padding:8px 12px}
+.fahdan-review-photos{display:flex;gap:12px;overflow:auto;padding:18px 0}
+.fahdan-review-photo{width:112px;min-width:112px;height:112px;border:1px solid #e0e3dc;border-radius:10px;overflow:hidden;display:grid;place-items:center;background:#f0f2ed}
+.fahdan-review-photo img{width:100%;height:100%;object-fit:cover}
+.fahdan-review-photo>span{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:8px;font-size:10px;color:#829184;padding:7px}
+.fahdan-review-stock{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:16px}
+.fahdan-review-stock>div{background:#f2f5ef;border:1px solid #e1e7dd;border-radius:9px;padding:13px;display:grid;gap:9px}
+.fahdan-review-stock small{color:#708075;font-size:11px}
+.fahdan-review-stock strong{color:#244533;font-size:14px}
+.fahdan-review-purchase{background:#f8f6ef;border:1px solid #ece6d6;padding:15px;border-radius:10px;margin:16px 0}
+.fahdan-review-purchase>strong{color:#655638;font-size:12px}
+.fahdan-review-purchase>p{color:#6a705e;font-size:12px;line-height:1.8;margin:8px 0}
+.fahdan-review-purchase>small{color:#92816c;font-size:11px;line-height:1.8}
+.fahdan-review-form{display:grid;gap:18px}
+.fahdan-review-form h4,.fahdan-review-approval h4{font-size:15px;color:#2b4836;display:flex;align-items:center;gap:7px;margin:13px 0 0}
+.fahdan-review-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+.fahdan-review-fields label,.fahdan-review-variant label{font-size:12px;color:#4a6452;font-weight:650;display:grid;gap:7px;min-width:0}
+.fahdan-review-fields .full{grid-column:1/-1}
+.fahdan-review-fields input,.fahdan-review-fields select,.fahdan-review-fields textarea,.fahdan-review-variant input{
+  font:inherit;font-size:13px;color:#274332;border:1px solid #d7ded3;border-radius:8px;background:#fff;
+  width:100%;min-width:0;padding:10px 12px;box-sizing:border-box}
+.fahdan-review-fields input:disabled,.fahdan-review-fields select:disabled,.fahdan-review-fields textarea:disabled,.fahdan-review-variant input:disabled{
+  color:#728074;background:#f5f7f1}
+.fahdan-review-variants{display:grid;gap:8px}
+.fahdan-review-variant{display:grid;grid-template-columns:minmax(120px,1fr) minmax(120px,1fr) minmax(120px,1fr);gap:12px;
+  align-items:end;border:1px solid #e6e8e1;border-radius:10px;padding:13px;background:#fafbf7}
+.fahdan-review-variant>strong{font-size:13px;color:#345140;display:grid;gap:6px;padding-bottom:7px}
+.fahdan-review-variant>strong small{font-size:10px;color:#728074;font-weight:400}
+.fahdan-review-save,.fahdan-review-approve{display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;
+  background:#294633;color:#fff;border:0;border-radius:9px;padding:13px 19px;font:inherit;font-size:13px;font-weight:700;justify-self:start}
+.fahdan-review-save{background:#e9eee8;color:#2f5d3d;border:1px solid #d0dfcf}
+.fahdan-review-save:disabled,.fahdan-review-approve:disabled{opacity:.45;cursor:not-allowed}
+.fahdan-review-approval{background:#edf4eb;border:1px solid #d1e2d0;border-radius:12px;margin-top:24px;padding:21px;display:grid;gap:13px}
+.fahdan-review-approval h4{margin:0 0 3px}
+.fahdan-review-approval>label{display:flex;align-items:flex-start;gap:9px;font-size:12px;line-height:1.8;color:#365b43;cursor:pointer}
+.fahdan-review-approval>label input{margin-top:5px;accent-color:#2c633a;width:17px;height:17px;flex-shrink:0}
+.fahdan-review-approval>small{font-size:11px;color:#6e7c6e;line-height:1.8}
+.fahdan-review-active{background:#e8f2e5;color:#306842;display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+  border-radius:11px;padding:17px;margin-top:20px;font-size:13px}
+.fahdan-review-active>button{background:#fff;color:#a14e37;border:1px solid #eadad2;display:inline-flex;align-items:center;gap:7px;
+  padding:9px 12px;font:inherit;font-size:12px;cursor:pointer;border-radius:8px;margin-inline-start:auto}
+.fahdan-review-warning{color:#935e33;background:#fff1e1;border-radius:8px;padding:12px;font-size:12px;line-height:1.9}
+.fahdan-review-empty{color:#7a897d;font-size:13px;line-height:1.9;padding:24px}
+.fahdan-review-alert{display:flex;align-items:center;gap:9px;padding:13px 16px;border-radius:10px;font-size:13px;margin:12px 0;line-height:1.7}
+.fahdan-review-alert.error{background:#fbece6;color:#934a3a}
+.fahdan-review-alert.success{background:#e8f3e7;color:#2b6a3d}
+@media(max-width:1000px){.fahdan-review-layout{grid-template-columns:210px minmax(0,1fr)}.fahdan-review-details{padding:17px}}
+@media(max-width:790px){.fahdan-review-layout{grid-template-columns:1fr}.fahdan-review-list{max-height:none;display:flex;overflow-x:auto}
+.fahdan-review-list>button{min-width:175px;flex-shrink:0}.fahdan-review-variant{grid-template-columns:1fr 1fr}
+.fahdan-review-variant>strong{grid-column:1/-1}.fahdan-review-stats button{padding:12px}}
+@media(max-width:540px){.fahdan-review-stats{grid-template-columns:1fr 1fr}.fahdan-review-stats button:last-child{grid-column:1/-1}
+.fahdan-review-fields,.fahdan-review-variant{grid-template-columns:1fr}.fahdan-review-stock{grid-template-columns:1fr 1fr}
+.fahdan-review-stock>div:last-child{grid-column:1/-1}.fahdan-review-details{padding:13px}.fahdan-review-approval{padding:14px}}
