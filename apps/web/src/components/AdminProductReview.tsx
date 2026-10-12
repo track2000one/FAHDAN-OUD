@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { CheckCircle2, ClipboardCheck, EyeOff, Image as ImageIcon, PackageCheck, Pencil, RefreshCw, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { AdminStockOperations } from './AdminStockOperations';
+import { CheckCircle2, ClipboardCheck, EyeOff, Image as ImageIcon, PackageCheck, Pencil, RefreshCw, ShieldCheck, AlertTriangle, ArrowRight, ArrowLeft, Star, Trash2 } from 'lucide-react';
 import {
   getAdminReviewPhoto, getAdminReviewProducts, saveAdminReviewProduct,
+  reorderAdminProductPhotos, removeAdminProductPhoto,
   setAdminProductPublishing, type AdminReviewEdit, type AdminReviewProduct
 } from '../api';
 
@@ -49,6 +51,7 @@ export function AdminProductReview({token,revision,onUpdated}:{
   const [form,setForm]=useState<AdminReviewEdit|null>(null);
   const [checked,setChecked]=useState({details:false,photos:false,prices:false});
   const [busy,setBusy]=useState(false);
+  const [photoBusy,setPhotoBusy]=useState(false);
   const [error,setError]=useState('');
   const [notice,setNotice]=useState('');
   const [reload,setReload]=useState(0);
@@ -136,6 +139,38 @@ export function AdminProductReview({token,revision,onUpdated}:{
     finally{setBusy(false);}
   }
 
+
+  async function reorderPhotos(photoId:string,move:'cover'|'up'|'down'){
+    if(!selected||selected.state!=='DRAFT'||busy||photoBusy)return;
+    const ids=selected.photos.map(p=>p.id);
+    const from=ids.indexOf(photoId);
+    if(from<0)return;
+    const to=move==='cover'?0:move==='up'?from-1:from+1;
+    if(to<0||to>=ids.length||from===to)return;
+    const next=[...ids];
+    next.splice(from,1);next.splice(to,0,photoId);
+    setError('');setNotice('');setPhotoBusy(true);
+    try{
+      const result=await reorderAdminProductPhotos(token,selected.id,next);
+      setNotice(result.message);
+      setChecked(old=>({...old,photos:false}));
+      onUpdated();
+    }catch(err){setError(err instanceof Error?err.message:'تعذر تغيير ترتيب الصور.');}
+    finally{setPhotoBusy(false);}
+  }
+  async function deletePhoto(photoId:string){
+    if(!selected||selected.state!=='DRAFT'||busy||photoBusy)return;
+    if(!window.confirm('سيتم حذف الصورة من هذا المنتج ومحاولة حذفها من Google Drive. هل تريد المتابعة؟'))return;
+    setError('');setNotice('');setPhotoBusy(true);
+    try{
+      const result=await removeAdminProductPhoto(token,selected.id,photoId);
+      setNotice(result.message);
+      setChecked(old=>({...old,photos:false}));
+      onUpdated();
+    }catch(err){setError(err instanceof Error?err.message:'تعذر حذف الصورة.');}
+    finally{setPhotoBusy(false);}
+  }
+
   return <section id="fahdan-product-review" className="admin-panel fahdan-review-panel">
     <div className="panel-heading">
       <h2><ClipboardCheck size={21}/> مراجعة واعتماد المنتجات قبل عرضها للعملاء</h2>
@@ -175,11 +210,26 @@ export function AdminProductReview({token,revision,onUpdated}:{
             <h3>{selected.nameAr}</h3>
             <small>رمز المنتج: {selected.slug} — أُضيف بتاريخ {day(selected.createdAt)}</small>
           </div><span className={selected.state==='ACTIVE'?'published':'pending'}>{stateText[selected.state]}</span></div>
-          <div className="fahdan-review-photos">
-            {selected.photos.length?selected.photos.map((photo,i)=>
-              <ReviewImage key={photo.id} token={token} productId={selected.id} id={photo.id}
-                alt={photo.altAr||`صورة المنتج ${i+1}`}/>):<p className="fahdan-review-warning">لم تُرفَع صور لهذا المنتج بعد. يجب رفع صورة واحدة على الأقل من قسم Google Drive قبل الاعتماد.</p>}
+          <div className="fahdan-review-photos fahdan-product-photo-manager">
+            {selected.photos.length?selected.photos.map((photo,i)=><div className="fahdan-product-photo-tile" key={photo.id}>
+              <ReviewImage token={token} productId={selected.id} id={photo.id}
+                alt={photo.altAr||`صورة المنتج ${i+1}`}/>
+              <small>{i===0?'صورة الغلاف الرئيسية':`الصورة رقم ${i+1}`}</small>
+              {selected.state==='DRAFT'&&<div className="fahdan-product-photo-actions">
+                {i>0&&<button type="button" title="تعيين الصورة كغلاف" aria-label="تعيين كغلاف"
+                  disabled={photoBusy||busy} onClick={()=>reorderPhotos(photo.id,'cover')}><Star size={15}/></button>}
+                {i>0&&<button type="button" title="تحريك الصورة للأمام" aria-label="تحريك للأمام"
+                  disabled={photoBusy||busy} onClick={()=>reorderPhotos(photo.id,'up')}><ArrowRight size={15}/></button>}
+                {i<selected.photos.length-1&&<button type="button" title="تحريك الصورة للخلف" aria-label="تحريك للخلف"
+                  disabled={photoBusy||busy} onClick={()=>reorderPhotos(photo.id,'down')}><ArrowLeft size={15}/></button>}
+                <button type="button" className="danger" title="حذف الصورة" aria-label="حذف الصورة"
+                  disabled={photoBusy||busy} onClick={()=>deletePhoto(photo.id)}><Trash2 size={15}/></button>
+              </div>}
+            </div>):<p className="fahdan-review-warning">لم تُرفَع صور لهذا المنتج بعد. ارفع صورة واحدة على الأقل عبر مكتبة Google Drive قبل الاعتماد.</p>}
           </div>
+          <p className="fahdan-review-photo-hint">{selected.state==='DRAFT'
+            ? 'يمكنك تحديد الغلاف بالنجمة، وتغيير ترتيب الصور أو حذف صورة. يُحفظ الترتيب مباشرة، وتبقى الصور غير منشورة حتى الاعتماد.'
+            : 'لإعادة ترتيب صور المنتج أو استبدالها، أوقف نشره مؤقتًا ثم أعد اعتماده بعد مراجعة الصور.'}</p>
           <div className="fahdan-review-stock">
             <div><small>الرصيد المتاح</small><strong>{selected.availableBase} {unitText[selected.baseUnit]||selected.baseUnit}</strong></div>
             <div><small>الحد الأدنى للتنبيه</small><strong>{selected.reorderPoint} {unitText[selected.baseUnit]||selected.baseUnit}</strong></div>
@@ -229,6 +279,7 @@ export function AdminProductReview({token,revision,onUpdated}:{
               {busy?'جارٍ الحفظ…':'حفظ تصحيحات المنتج والأسعار'}
             </button>}
           </form>
+          <AdminStockOperations token={token} product={selected} onUpdated={onUpdated}/>
           {selected.state==='DRAFT'?<div className="fahdan-review-approval">
             <h4><ShieldCheck size={18}/> قائمة تدقيق اعتماد النشر</h4>
             {!complete&&<p className="fahdan-review-warning">لا يمكن الاعتماد حتى تتوفر صورة للمنتج، ورصيد فعلي، وحجم مسعّر قابل للبيع.</p>}

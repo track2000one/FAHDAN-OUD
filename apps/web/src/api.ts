@@ -235,3 +235,42 @@ export function setAdminProductPublishing(token:string,productId:string,state:'D
       method:'PATCH',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({state,confirmed})
     });
 }
+
+export type AdminStockSnapshot = {
+  balance:{onHandBase:string;reservedBase:string;availableBase:string;reorderPoint:string;version:number}|null;
+  movements:{id:string;kind:string;deltaBase:string;reason:string|null;createdAt:string;sourceRef:string|null}[];
+};
+export function getAdminProductStock(token:string,productId:string){
+  return request<AdminStockSnapshot>(
+    `/admin/manage/products/${encodeURIComponent(productId)}/stock`,{
+      headers:{Authorization:`Bearer ${token}`}
+    });
+}
+export function receiveAdminStock(token:string,productId:string,data:{
+  requestKey:string;quantityBase:string;totalCostSar:string;supplierName:string;
+  invoiceReference:string;receivedAt:string
+}){
+  return request<AdminStockSnapshot&{message:string}>(
+    `/admin/manage/products/${encodeURIComponent(productId)}/stock/receipt`,{
+      method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify(data)
+    });
+}
+export function writeOffAdminStock(token:string,productId:string,data:{
+  requestKey:string;quantityBase:string;kind:'LOSS'|'DAMAGE'|'ADJUSTMENT';reason:string
+}){
+  return request<AdminStockSnapshot&{message:string}>(
+    `/admin/manage/products/${encodeURIComponent(productId)}/stock/writeoff`,{
+      method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify(data)
+    });
+}
+export function reorderAdminProductPhotos(token:string,productId:string,photoIds:string[]){
+  return request<{message:string}>(`/admin/manage/products/${encodeURIComponent(productId)}/photos/order`,{
+    method:'PUT',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({photoIds})
+  });
+}
+export function removeAdminProductPhoto(token:string,productId:string,photoId:string){
+  return request<{message:string;cleanupPending:boolean}>(
+    `/admin/manage/products/${encodeURIComponent(productId)}/photos/${encodeURIComponent(photoId)}`,{
+      method:'DELETE',headers:{Authorization:`Bearer ${token}`}
+    });
+}
