@@ -97,7 +97,7 @@ const variantFieldNames:Record<string,string>={
 function explainIntakeIssue(issue:z.ZodIssue){
   const parts=issue.path.map(String);
   const field=parts.join('.');
-  const inVariant=parts[0]==='variants'&&/^\\d+$/.test(parts[1]||'');
+  const inVariant=parts[0]==='variants'&&/^\d+$/.test(parts[1]||'');
   const label=inVariant?
     `حجم البيع رقم ${Number(parts[1])+1} — ${variantFieldNames[parts[2]]||'البيانات'}`:
     intakeFieldNames[parts[0]]||'بيانات المنتج';
@@ -105,7 +105,7 @@ function explainIntakeIssue(issue:z.ZodIssue){
   if(issue.code==='invalid_type')detail='القيمة المطلوبة غير مدخلة أو ليست من النوع الصحيح.';
   else if(issue.code==='too_small')detail='القيمة أصغر من الحد الأدنى المطلوب.';
   else if(issue.code==='too_big')detail='القيمة تتجاوز الحد المسموح.';
-  else if(!/[\\u0600-\\u06FF]/.test(detail))detail='البيانات غير صالحة؛ راجع القيمة المدخلة.';
+  else if(!/[\u0600-\u06FF]/.test(detail))detail='البيانات غير صالحة؛ راجع القيمة المدخلة.';
   return {field,label,message:`${label}: ${detail}`};
 }
 
