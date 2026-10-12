@@ -31,7 +31,7 @@ export async function getCatalog(): Promise<{ products:Product[]; categories:{sl
     ]);
     return {products,categories,connected:true};
   } catch {
-    return {products:demoProducts,categories:fallbackCategories,connected:false};
+    return {products:import.meta.env.PROD?[]:demoProducts,categories:fallbackCategories,connected:false};
   }
 }
 export function signIn(email:string,password:string) {
