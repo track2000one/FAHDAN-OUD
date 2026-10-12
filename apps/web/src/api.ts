@@ -43,6 +43,42 @@ export function getDashboard(token:string) {
   return request<Dashboard>('/admin/dashboard',{headers:{Authorization:`Bearer ${token}`}});
 }
 
+export type AdminReviewVariant={
+  id:string;sku:string;labelAr:string;quantityBase:string;
+  priceSar:string;compareAtPriceSar:string;active:boolean;
+};
+export type AdminReviewProduct={
+  id:string;slug:string;nameAr:string;kind:string;baseUnit:string;
+  state:'DRAFT'|'ACTIVE'|'ARCHIVED'|'OUT_OF_STOCK';
+  originCountry:string;originRegion:string;grade:string;scentProfile:string;
+  descriptionAr:string;projectionScore:number|null;longevityScore:number|null;
+  createdAt:string;updatedAt:string;availableBase:string;onHandBase:string;reorderPoint:string;
+  variants:AdminReviewVariant[];photos:{id:string;altAr:string|null;sort:number}[];
+  purchase:{supplierName:string;receivedAt:string;invoiceReference:string|null;
+    quantityBase:string;totalCostSar:string}|null;
+};
+export type AdminReviewEdit={
+  nameAr:string;originCountry:string;originRegion:string;grade:string;scentProfile:string;
+  descriptionAr:string;projectionScore:number|null;longevityScore:number|null;
+  variants:{id:string;priceSar:string;compareAtPriceSar:string}[];
+};
+export function getAdminReviewProducts(token:string){
+  return request<{products:AdminReviewProduct[]}>('/admin/products/review',{
+    headers:{Authorization:`Bearer ${token}`}
+  });
+}
+export function saveAdminReviewProduct(token:string,id:string,details:AdminReviewEdit){
+  return request<{id:string;message:string}>(`/admin/products/${encodeURIComponent(id)}/review`,{
+    method:'PATCH',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify(details)
+  });
+}
+export async function getAdminReviewPhoto(token:string,productId:string,photoId:string){
+  const response=await fetch(endpoint(
+    `/admin/products/${encodeURIComponent(productId)}/photos/${encodeURIComponent(photoId)}`
+  ),{headers:{Authorization:`Bearer ${token}`}});
+  if(!response.ok)throw new Error('تعذر تحميل صورة المنتج للمراجعة.');
+  return response.blob();
+}
 export type AdminProduct = {id:string;name:string;status:string;unit:string;onHand:number;reserved:number;reorderPoint:number;variantCount:number;imageCount:number};
 export function getAdminProducts(token:string) {
   return request<AdminProduct[]>('/admin/products',{headers:{Authorization:`Bearer ${token}`}});
@@ -193,9 +229,9 @@ export function createAdminProduct(token:string,data:NewProductIntake) {
     method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify(data)
   });
 }
-export function setAdminProductPublishing(token:string,productId:string,state:'DRAFT'|'ACTIVE') {
+export function setAdminProductPublishing(token:string,productId:string,state:'DRAFT'|'ACTIVE',confirmed=false) {
   return request<{product:{id:string;state:string;slug:string};message:string}>(
     `/admin/products/${encodeURIComponent(productId)}/publishing`,{
-      method:'PATCH',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({state})
+      method:'PATCH',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({state,confirmed})
     });
 }
