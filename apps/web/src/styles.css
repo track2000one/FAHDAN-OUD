@@ -635,3 +635,72 @@ border:2px dashed #b8cab8;border-radius:12px;padding:24px 15px;background:#f7faf
   .fahdan-invoice-disclaimer{break-inside:avoid}
   .fahdan-invoice-sheet header,.fahdan-invoice-sheet footer{break-inside:avoid}
 }
+
+
+/* Merchant setup: legal business data, VAT readiness, shipping and payment onboarding */
+.fahdan-merchant-settings{margin:27px 0}
+.fahdan-merchant-settings .panel-heading h2{display:flex;align-items:center;gap:10px}
+.fahdan-merchant-intro{color:#627868;font-size:13px;line-height:1.95;margin:0 0 20px}
+.fahdan-merchant-tabs{display:flex;gap:7px;border-bottom:1px solid #e2e9df;padding-bottom:13px;flex-wrap:wrap;margin-bottom:21px}
+.fahdan-merchant-tabs button{display:inline-flex;align-items:center;justify-content:center;gap:8px;
+ padding:12px 17px;border:1px solid #d8e6d8;background:#fbfcf8;border-radius:9px;color:#365943;
+ font:inherit;font-size:12px;cursor:pointer}
+.fahdan-merchant-tabs button.selected{background:#254833;color:#fff;border-color:#254833}
+.fahdan-merchant-tabs button:disabled{opacity:.55}
+.fahdan-merchant-message{display:flex;gap:8px;align-items:start;font-size:13px;padding:12px 15px;border-radius:9px;margin:15px 0;line-height:1.8}
+.fahdan-merchant-message.warning{background:#fff0e9;color:#954a36}
+.fahdan-merchant-message.success{background:#e7f2e7;color:#2e6944}
+.fahdan-merchant-form{display:grid;gap:20px;max-width:1100px}
+.fahdan-merchant-heading{display:flex;align-items:start;gap:12px;border-bottom:1px solid #e7ebe3;padding-bottom:15px}
+.fahdan-merchant-heading>svg{color:#ae9363;flex-shrink:0}
+.fahdan-merchant-heading h3{font-size:18px;color:#2b4b36;margin:0 0 8px}
+.fahdan-merchant-heading p{font-size:12px;line-height:1.9;color:#788679;margin:0}
+.fahdan-merchant-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px 20px}
+.fahdan-merchant-grid>label,.fahdan-merchant-rate>label{display:grid;gap:8px;font-weight:700;font-size:12px;color:#35543d;min-width:0}
+.fahdan-merchant-grid>label.wide{grid-column:1/-1}
+.fahdan-merchant-grid input,.fahdan-merchant-grid textarea,.fahdan-merchant-grid select,
+.fahdan-merchant-rate input{box-sizing:border-box;width:100%;background:#fff;border:1px solid #dce4d8;
+ border-radius:9px;padding:12px;font:inherit;font-size:13px;color:#294533;min-width:0}
+.fahdan-merchant-grid input:focus,.fahdan-merchant-rate input:focus{outline:2px solid #9bbd9c}
+.fahdan-merchant-check{display:flex;align-items:start;gap:10px;color:#2b593e;font-weight:700;
+ line-height:1.8;font-size:13px;background:#f1f8ef;border:1px solid #d9ead7;padding:15px;border-radius:10px}
+.fahdan-merchant-check input{margin-top:5px;accent-color:#2c6842;width:18px;height:18px;flex-shrink:0}
+.fahdan-merchant-guidance{display:flex;gap:10px;align-items:start;background:#fcf4e5;
+ border:1px solid #eddfbf;padding:14px;border-radius:9px;line-height:1.95;color:#866936;font-size:12px;margin:0}
+.fahdan-merchant-guidance svg{flex-shrink:0}
+.fahdan-merchant-footer{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.fahdan-merchant-footer .button{display:flex;align-items:center;gap:9px}
+.fahdan-merchant-footer>small{font-size:11px;color:#809084}
+.fahdan-merchant-rate-rows{display:grid;gap:12px}
+.fahdan-merchant-rate{display:grid;grid-template-columns:1fr 140px 1fr 35px;gap:13px;
+ padding:13px;background:#f9fbf6;border:1px solid #e5eadf;border-radius:12px;align-items:end}
+.fahdan-merchant-rate>button{border:1px solid #efdbd5;color:#aa5345;background:#fff1ed;border-radius:7px;
+ height:40px;display:grid;place-items:center;cursor:pointer}
+.fahdan-merchant-add{display:inline-flex;align-items:center;gap:8px;justify-self:start;
+ background:#f1f6ee;border:1px solid #d4e3d0;color:#325c41;border-radius:8px;
+ padding:10px 15px;font:inherit;font-size:12px;cursor:pointer}
+.fahdan-merchant-methods{display:grid;gap:11px;color:#34573f;font-size:13px;background:#f9faf7;
+ padding:14px;border:1px solid #e1e8df;border-radius:9px}
+.fahdan-merchant-methods strong{font-size:12px}
+.fahdan-merchant-methods>label{display:flex;gap:9px;align-items:center;font-size:12px}
+.fahdan-merchant-methods input{width:16px;height:16px;accent-color:#2d6642}
+.fahdan-shipping-policy{padding-top:36px;padding-bottom:90px;max-width:1040px}
+.fahdan-shipping-policy-head h1{font-size:clamp(27px,3.4vw,39px);display:flex;gap:12px;align-items:center;line-height:1.55;color:#254b34}
+.fahdan-shipping-policy-head p{font-size:14px;line-height:2;color:#77887a}
+.fahdan-shipping-policy-card{margin:25px 0;border:1px solid #e0e7dc;border-radius:13px;padding:26px;background:#fcfbf8}
+.fahdan-shipping-policy-card h2{font-size:19px;display:flex;gap:9px;align-items:center;color:#2b5239}
+.fahdan-shipping-policy-card p{font-size:13px;line-height:2;color:#647965}
+.fahdan-shipping-tariffs{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:13px;margin:21px 0}
+.fahdan-shipping-tariffs>div{display:grid;gap:10px;background:#eef4ed;padding:16px;border:1px solid #e0e9dc;border-radius:10px}
+.fahdan-shipping-tariffs strong{color:#275037;font-size:15px}
+.fahdan-shipping-tariffs span{color:#987344;font-size:18px;font-weight:800}
+.fahdan-shipping-tariffs small{color:#6c836f;font-size:12px}
+.fahdan-policy-pre{white-space:pre-wrap}
+.fahdan-shipping-special{padding:12px;border-radius:9px;background:#fdf2e0;color:#806033!important}
+.fahdan-shipping-disclaimer{font-size:11px!important;color:#8c9185!important}
+.fahdan-checkout-shipping-note{font-size:11px;line-height:1.9;color:#708875;background:#f6f9f3;padding:11px;border-radius:8px}
+.fahdan-checkout-shipping-note a{color:#2c643f;text-decoration:underline}
+@media(max-width:780px){.fahdan-merchant-rate{grid-template-columns:1fr 1fr}
+.fahdan-merchant-rate>button{justify-self:end;width:35px}}
+@media(max-width:550px){.fahdan-merchant-grid,.fahdan-merchant-rate{grid-template-columns:1fr}
+.fahdan-merchant-rate>button{justify-self:end}.fahdan-merchant-tabs button{flex:1}}
