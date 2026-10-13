@@ -1,4 +1,5 @@
 import { Router, type RequestHandler } from 'express';
+import { Prisma } from '@prisma/client';
 import jwt, { type JwtPayload } from 'jsonwebtoken';
 import { rateLimit } from 'express-rate-limit';
 import { z } from 'zod';
@@ -158,6 +159,61 @@ accountRouter.delete('/addresses/:id',async(req,res,next)=>{
     });
     if(!deleted){res.status(404).json({error:'العنوان غير موجود.'});return;}
     res.json({message:'تم حذف العنوان.'});
+  }catch(e){next(e);}
+});
+
+
+accountRouter.get('/orders/:id/document',async(req,res,next)=>{
+  try{
+    const id=req.params.id;
+    if(!id||id.length>120){res.status(400).json({error:'معرّف الطلب غير صحيح.'});return;}
+    const order=await prisma.order.findFirst({
+      where:{id,customerId:res.locals.customerId},
+      select:{
+        id:true,orderNumber:true,state:true,createdAt:true,updatedAt:true,
+        subtotalSar:true,discountSar:true,shippingSar:true,taxSar:true,
+        totalSar:true,giftWrapFeeSar:true,addressSnapshot:true,
+        customer:{select:{name:true,email:true}},
+        items:{select:{id:true,productNameAr:true,skuSnapshot:true,
+          quantityItems:true,eachBase:true,unitPriceSar:true,totalPriceSar:true}},
+        payments:{where:{state:'CAPTURED'},select:{id:true,paidAt:true,amountSar:true},take:5}
+      }
+    });
+    if(!order){res.status(404).json({error:'مستند الطلب غير موجود ضمن حسابك.'});return;}
+    const captured=order.payments.reduce((sum,p)=>sum.add(p.amountSar),new Prisma.Decimal(0));
+    // A preliminary request must never be presented as a tax invoice or a paid sale.
+    // No ZATCA-compliant invoice/QR can be issued without verified fiscal configuration.
+    const paymentRecorded=!['AWAITING_REVIEW','PENDING_PAYMENT','CANCELLED'].includes(order.state)
+      &&captured.gte(order.totalSar)&&order.totalSar.gt(0);
+    const address=deliveryFromOrderSnapshot(order.addressSnapshot);
+    res.setHeader('Cache-Control','private,no-store');
+    res.json({
+      document:{
+        kind:paymentRecorded?'PURCHASE_RECEIPT':'PRELIMINARY_ORDER',
+        taxInvoice:false,
+        documentNumber:order.orderNumber,
+        createdAt:order.createdAt,
+        paidAt:paymentRecorded?order.payments.find(p=>p.paidAt)?.paidAt||null:null,
+        state:order.state,
+        customerName:order.customer?.name||'عميل فهدان',
+        customerEmail:order.customer?.email||null,
+        sellerName:'فهدان للعود',
+        address,
+        items:order.items.map(i=>({
+          ...i,eachBase:i.eachBase.toString(),
+          unitPriceSar:i.unitPriceSar.toFixed(2),totalPriceSar:i.totalPriceSar.toFixed(2)
+        })),
+        subtotalSar:order.subtotalSar.toFixed(2),
+        discountSar:order.discountSar.toFixed(2),
+        shippingSar:paymentRecorded?order.shippingSar.toFixed(2):null,
+        taxSar:paymentRecorded?order.taxSar.toFixed(2):null,
+        giftWrapFeeSar:order.giftWrapFeeSar.toFixed(2),
+        totalSar:paymentRecorded?order.totalSar.toFixed(2):null,
+        notice:paymentRecorded
+          ?'بيان شراء وإيصال غير ضريبي. لا يُعد فاتورة إلكترونية ضريبية معتمدة من هيئة الزكاة والضريبة والجمارك.'
+          :'ملخص طلب مبدئي غير مدفوع. أجرة الشحن والضريبة والإجمالي النهائي غير معتمدة. هذا المستند ليس فاتورة ضريبية ولا إثبات دفع.'
+      }
+    });
   }catch(e){next(e);}
 });
 
