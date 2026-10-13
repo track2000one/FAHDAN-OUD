@@ -16,6 +16,7 @@ import { checkoutRouter } from './routes/checkout.js';
 import { adminRouter } from './routes/admin.js';
 import { productIntakeRouter } from './routes/product-intake.js';
 import { productManagementRouter } from './routes/product-management.js';
+import { merchantSettingsRouter, shippingInfoRouter } from './routes/merchant-settings.js';
 import { mediaRouter } from './routes/media.js';
 
 const envSchema = z.object({
@@ -53,6 +54,7 @@ app.get('/api/v1/health', async (_req, res) => {
   catch { res.status(503).json({ status: 'unavailable', database: 'disconnected' }); }
 });
 app.use('/api/v1', catalogRouter);
+app.use('/api/v1', shippingInfoRouter);
 app.use('/api/v1', mediaRouter);
 app.use('/api/v1/auth', rateLimit({ windowMs: 15 * 60 * 1000, limit: 10, standardHeaders: 'draft-7', legacyHeaders: false }), authRouter);
 app.use('/api/v1/customer', rateLimit({ windowMs: 15 * 60 * 1000, limit: 15, standardHeaders: 'draft-7', legacyHeaders: false }), customerRouter);
@@ -62,6 +64,7 @@ app.use('/api/v1/checkout', checkoutRouter);
 app.use('/api/v1/admin', productIntakeRouter);
 app.use('/api/v1/admin/manage', productManagementRouter);
 app.use('/api/v1/admin', adminRouter);
+app.use('/api/v1/admin/merchant', merchantSettingsRouter);
 app.use('/api/v1/admin/returns', returnsAdminRouter);
 app.use('/api', (_req, res) => res.status(404).json({ error: 'المسار غير موجود.' }));
 
