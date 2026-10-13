@@ -274,3 +274,62 @@ export function removeAdminProductPhoto(token:string,productId:string,photoId:st
       method:'DELETE',headers:{Authorization:`Bearer ${token}`}
     });
 }
+
+
+export type ReturnKind='RETURN'|'EXCHANGE';
+export type ReturnReason='CHANGED_MIND'|'WRONG_ITEM'|'DAMAGED'|'DEFECTIVE'|'NOT_AS_DESCRIBED'|'OTHER';
+export type ReturnStatus='SUBMITTED'|'NEEDS_INFORMATION'|'APPROVED'|'REJECTED'|'ITEM_RECEIVED';
+export type ReturnRequestRecord={
+  id:string;customerId:string;orderId:string;orderItemId:string;
+  kind:ReturnKind;reason:ReturnReason;quantity:number;explanation:string;
+  itemOpened:boolean|null;status:ReturnStatus;decisionNote:string|null;
+  reviewedAt:string|null;createdAt:string;updatedAt:string;
+  order:{orderNumber:string;createdAt:string};
+  orderItem:{productNameAr:string;skuSnapshot:string;quantityItems:number};
+};
+export type AdminReturnRecord=ReturnRequestRecord&{
+  customer:{name:string;email:string;phone:string|null};
+};
+export function getCustomerReturns(token:string){
+  return request<{requests:ReturnRequestRecord[]}>('/account/returns',{
+    headers:{Authorization:`Bearer ${token}`}
+  });
+}
+export function createCustomerReturn(token:string,data:{
+  orderItemId:string;quantity:number;kind:ReturnKind;reason:ReturnReason;
+  explanation:string;itemOpened:boolean;
+}){
+  return request<{request:ReturnRequestRecord;message:string}>('/account/returns',{
+    method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify(data)
+  });
+}
+export function replyCustomerReturn(token:string,id:string,explanation:string){
+  return request<{message:string}>(`/account/returns/${encodeURIComponent(id)}/reply`,{
+    method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({explanation})
+  });
+}
+export function getAdminReturns(token:string){
+  return request<{requests:AdminReturnRecord[]}>('/admin/returns',{
+    headers:{Authorization:`Bearer ${token}`}
+  });
+}
+export function reviewAdminReturn(token:string,id:string,status:Exclude<ReturnStatus,'SUBMITTED'>,note:string){
+  return request<{id:string;message:string}>(`/admin/returns/${encodeURIComponent(id)}/review`,{
+    method:'PATCH',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({status,note})
+  });
+}
+export type OrderDocument={
+  kind:'PRELIMINARY_ORDER'|'PURCHASE_RECEIPT';
+  taxInvoice:false;documentNumber:string;createdAt:string;paidAt:string|null;
+  state:string;customerName:string;customerEmail:string|null;sellerName:string;
+  address:DeliverySnapshot|null;
+  items:{id:string;productNameAr:string;skuSnapshot:string;quantityItems:number;
+    eachBase:string;unitPriceSar:string;totalPriceSar:string}[];
+  subtotalSar:string;discountSar:string;shippingSar:string|null;taxSar:string|null;
+  giftWrapFeeSar:string;totalSar:string|null;notice:string;
+};
+export function getCustomerOrderDocument(token:string,id:string){
+  return request<{document:OrderDocument}>(`/account/orders/${encodeURIComponent(id)}/document`,{
+    headers:{Authorization:`Bearer ${token}`}
+  });
+}
