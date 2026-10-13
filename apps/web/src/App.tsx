@@ -8,11 +8,13 @@ import { AdminProductIntake } from './components/AdminProductIntake';
 import { AdminProductReview } from './components/AdminProductReview';
 import { AdminOrders } from './components/AdminOrders';
 import { AdminReturns } from './components/AdminReturns';
+import { AdminMerchantSettings } from './components/AdminMerchantSettings';
 import { CustomerAccount } from './components/CustomerAccount';
 import { CustomerDashboard } from './components/CustomerDashboard';
 import { CustomerCheckout } from './components/CustomerCheckout';
 import { CustomerOrderDocument } from './components/CustomerOrderDocument';
 import { ReturnsPolicy } from './components/ReturnsPolicy';
+import { ShippingPolicy } from './components/ShippingPolicy';
 import { demoProducts, fallbackCategories } from './demo';
 import type { CartLine, Dashboard, Product, Variant } from './types';
 
@@ -179,9 +181,10 @@ function Admin() {
     <AdminWarehouse token={token} revision={revision} onUpdated={refreshProducts}/>
     <AdminOrders token={token}/>
     <AdminReturns token={token}/>
+    <AdminMerchantSettings token={token}/>
   </main>;
 }
-function Footer(){return <footer className="footer"><div className="container footer-main"><div><Brand inverse/><p>تجربة عصرية تنطلق من أصالة العود والبخور، وتمنح التفاصيل مكانتها.</p></div><div><h3>تصفح فهدان</h3><Link to="/">الرئيسية</Link><Link to="/#products">المنتجات</Link><Link to="/account">حسابي</Link><Link to="/returns-policy">الاستبدال والاسترجاع</Link></div><div><h3>معلومات المتجر</h3><span>التواصل: يحدد لاحقًا</span><span>الشحن: تحت الإعداد</span><span>الدفع: غير مفعل</span></div><div className="footer-letter"><span>FAHDAN</span><strong>للطيب حكاية</strong></div></div><div className="footer-bottom container"><span>© فهدان للعود — نسخة تطويرية 2026</span><span>بُنيت بعناية لتكبر مع فهدان</span></div></footer>}
+function Footer(){return <footer className="footer"><div className="container footer-main"><div><Brand inverse/><p>تجربة عصرية تنطلق من أصالة العود والبخور، وتمنح التفاصيل مكانتها.</p></div><div><h3>تصفح فهدان</h3><Link to="/">الرئيسية</Link><Link to="/#products">المنتجات</Link><Link to="/account">حسابي</Link><Link to="/returns-policy">الاستبدال والاسترجاع</Link><Link to="/shipping-policy">الشحن والتوصيل</Link></div><div><h3>معلومات المتجر</h3><span>التواصل: يحدد لاحقًا</span><span>الشحن: تحت الإعداد</span><span>الدفع: غير مفعل</span></div><div className="footer-letter"><span>FAHDAN</span><strong>للطيب حكاية</strong></div></div><div className="footer-bottom container"><span>© فهدان للعود — نسخة تطويرية 2026</span><span>بُنيت بعناية لتكبر مع فهدان</span></div></footer>}
 export default function App(){
   const [products,setProducts]=useState<Product[]>(import.meta.env.PROD?[]:demoProducts),[categories,setCategories]=useState(fallbackCategories),[connected,setConnected]=useState(false);
   const [cart,setCart]=useState<CartLine[]>(readCart),[cartOpen,setCartOpen]=useState(false),[toast,setToast]=useState('');
@@ -247,6 +250,7 @@ export default function App(){
 <Route path="/account/verify" element={<CustomerAccount view="verify" customer={customer} onSignIn={signInCustomer} onSignOut={logoutCustomer}/>}/>
 <Route path="/account" element={customerLoading?<main className="container account-loading">جارٍ التحقق من جلسة حسابك…</main>:customer?<CustomerDashboard onProfileUpdated={updateCustomer} onLogout={logoutCustomer}/>:<Navigate to="/account/login" replace/>}/>
 <Route path="/returns-policy" element={<ReturnsPolicy/>}/>
+<Route path="/shipping-policy" element={<ShippingPolicy/>}/>
 <Route path="/account/orders/:id/document" element={customerLoading?<main className="container account-loading">جارٍ التحقق من حسابك…</main>:customer?<CustomerOrderDocument/>:<Navigate to="/account/login" replace/>}/>
 <Route path="/checkout" element={customerLoading?<main className="container account-loading">جارٍ التحقق من حسابك…</main>:customer?<CustomerCheckout cart={cart} products={products} onCompleted={()=>setCart([])}/>:<Navigate to="/account/login" replace/>}/>
 <Route path="/admin" element={customerLoading?<main className="container account-loading">جارٍ التحقق من صلاحية الجلسة…</main>:customer?<Navigate to="/account" replace/>:<Admin/>}/><Route path="*" element={<main className="container missing"><h1>الصفحة غير موجودة</h1><button className="button dark" onClick={()=>navigate('/')}>العودة للرئيسية</button></main>}/></Routes><Footer/><CartDrawer cart={cart} visible={cartOpen} close={()=>setCartOpen(false)} change={change} remove={sku=>setCart(prev=>prev.filter(x=>x.sku!==sku))}/>{toast&&<div className="toast" role="status"><Check size={17}/>{toast}</div>}</div>;
