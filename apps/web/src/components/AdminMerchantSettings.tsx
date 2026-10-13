@@ -42,7 +42,8 @@ export function AdminMerchantSettings({token}:{token:string}){
     return()=>{live=false;};
   },[token]);
   const changeBilling=<K extends keyof MerchantBillingSettings>(key:K,value:MerchantBillingSettings[K])=>
-    setBilling(prev=>({...prev,[key]:value,reviewedByMerchant:key==='reviewedByMerchant'?Boolean(value):false}));
+    setBilling(prev=>({...prev,[key]:value,reviewedByMerchant:key==='reviewedByMerchant'?Boolean(value):false,
+      ...(key==='taxStatus'&&value!=='REGISTERED'?{vatNumber:''}:{})}));
   async function save(e:FormEvent<HTMLFormElement>){
     e.preventDefault();if(saving||loading)return;
     setSaving(true);setError('');setNotice('');
