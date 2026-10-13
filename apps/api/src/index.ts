@@ -11,6 +11,7 @@ import { catalogRouter } from './routes/catalog.js';
 import { authRouter } from './routes/auth.js';
 import { customerRouter } from './routes/customer.js';
 import { accountRouter } from './routes/account.js';
+import { returnsCustomerRouter, returnsAdminRouter } from './routes/returns.js';
 import { checkoutRouter } from './routes/checkout.js';
 import { adminRouter } from './routes/admin.js';
 import { productIntakeRouter } from './routes/product-intake.js';
@@ -56,10 +57,12 @@ app.use('/api/v1', mediaRouter);
 app.use('/api/v1/auth', rateLimit({ windowMs: 15 * 60 * 1000, limit: 10, standardHeaders: 'draft-7', legacyHeaders: false }), authRouter);
 app.use('/api/v1/customer', rateLimit({ windowMs: 15 * 60 * 1000, limit: 15, standardHeaders: 'draft-7', legacyHeaders: false }), customerRouter);
 app.use('/api/v1/account', accountRouter);
+app.use('/api/v1/account/returns', returnsCustomerRouter);
 app.use('/api/v1/checkout', checkoutRouter);
 app.use('/api/v1/admin', productIntakeRouter);
 app.use('/api/v1/admin/manage', productManagementRouter);
 app.use('/api/v1/admin', adminRouter);
+app.use('/api/v1/admin/returns', returnsAdminRouter);
 app.use('/api', (_req, res) => res.status(404).json({ error: 'المسار غير موجود.' }));
 
 // Railway production: the API and built React app are hosted on one service and domain.
