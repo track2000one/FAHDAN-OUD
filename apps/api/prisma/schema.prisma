@@ -84,6 +84,28 @@ enum OrderState {
   RETURNED
 }
 
+enum ReturnRequestKind {
+  RETURN
+  EXCHANGE
+}
+
+enum ReturnReason {
+  CHANGED_MIND
+  WRONG_ITEM
+  DAMAGED
+  DEFECTIVE
+  NOT_AS_DESCRIBED
+  OTHER
+}
+
+enum ReturnRequestStatus {
+  SUBMITTED
+  NEEDS_INFORMATION
+  APPROVED
+  REJECTED
+  ITEM_RECEIVED
+}
+
 enum PaymentState {
   PENDING
   AUTHORIZED
@@ -114,6 +136,7 @@ model User {
   emailVerifiedAt DateTime?
   emailActions EmailActionToken[]
   orders       Order[]
+  returnRequests ReturnRequest[]
   addresses    CustomerAddress[]
   auditLogs    AuditLog[]
 }
@@ -335,6 +358,7 @@ model Order {
   giftWrapFeeSar    Decimal            @default(0) @db.Decimal(14, 2)
   items             OrderItem[]
   reservations      StockReservation[]
+  returnRequests    ReturnRequest[]
   payments          Payment[]
   shipments         Shipment[]
   createdAt         DateTime           @default(now())
@@ -345,6 +369,7 @@ model OrderItem {
   id              String         @id @default(cuid())
   orderId         String
   order           Order          @relation(fields: [orderId], references: [id])
+  returnRequests  ReturnRequest[]
   variantId       String
   variant         ProductVariant @relation(fields: [variantId], references: [id])
   productNameAr   String         // Immutable order-time snapshot.
@@ -354,6 +379,32 @@ model OrderItem {
   unitPriceSar    Decimal        @db.Decimal(14, 2)
   totalPriceSar   Decimal        @db.Decimal(14, 2)
   cogsSar         Decimal?       @db.Decimal(14, 2) // Final cost basis after allocation.
+}
+
+
+model ReturnRequest {
+  id                String              @id @default(cuid())
+  customerId        String
+  customer          User                @relation(fields: [customerId], references: [id])
+  orderId           String
+  order             Order               @relation(fields: [orderId], references: [id])
+  orderItemId       String
+  orderItem         OrderItem           @relation(fields: [orderItemId], references: [id])
+  kind              ReturnRequestKind
+  reason            ReturnReason
+  quantity          Int
+  explanation       String
+  itemOpened        Boolean?
+  status            ReturnRequestStatus @default(SUBMITTED)
+  decisionNote      String?
+  reviewedBy        String?
+  reviewedAt        DateTime?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([customerId, createdAt])
+  @@index([orderId, status])
+  @@index([status, createdAt])
 }
 
 model Payment {
