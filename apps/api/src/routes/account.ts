@@ -1,4 +1,5 @@
 import { Router, type RequestHandler } from 'express';
+import { Prisma } from '@prisma/client';
 import jwt, { type JwtPayload } from 'jsonwebtoken';
 import { rateLimit } from 'express-rate-limit';
 import { z } from 'zod';
@@ -179,7 +180,7 @@ accountRouter.get('/orders/:id/document',async(req,res,next)=>{
       }
     });
     if(!order){res.status(404).json({error:'مستند الطلب غير موجود ضمن حسابك.'});return;}
-    const captured=order.payments.reduce((sum,p)=>sum.add(p.amountSar),new (await import('@prisma/client')).Prisma.Decimal(0));
+    const captured=order.payments.reduce((sum,p)=>sum.add(p.amountSar),new Prisma.Decimal(0));
     // A preliminary request must never be presented as a tax invoice or a paid sale.
     // No ZATCA-compliant invoice/QR can be issued without verified fiscal configuration.
     const paymentRecorded=!['AWAITING_REVIEW','PENDING_PAYMENT','CANCELLED'].includes(order.state)
