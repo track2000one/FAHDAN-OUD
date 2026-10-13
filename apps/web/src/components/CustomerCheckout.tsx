@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, CheckCircle2, CircleAlert, ClipboardCheck, MapPin, Package, ShieldCheck, Truck } from 'lucide-react';
 import {
-  getCheckoutQuote, getCustomerAddresses, submitPreliminaryOrder,
+  getCheckoutQuote, getCustomerAddresses, submitPreliminaryOrder, getShippingEstimate,
+  type ShippingEstimate,
   type CheckoutQuote, type CheckoutCartItem, type CustomerAddress
 } from '../api';
 import type { CartLine, Product } from '../types';
@@ -16,6 +17,7 @@ export function CustomerCheckout({cart,products,onCompleted}:{
   const [addresses,setAddresses]=useState<CustomerAddress[]>([]);
   const [addressId,setAddressId]=useState('');
   const [quote,setQuote]=useState<CheckoutQuote|null>(null);
+  const [shippingEstimate,setShippingEstimate]=useState<ShippingEstimate|null>(null);
   const [loading,setLoading]=useState(true);
   const [submitting,setSubmitting]=useState(false);
   const [error,setError]=useState('');
@@ -64,6 +66,14 @@ export function CustomerCheckout({cart,products,onCompleted}:{
   },[session,items]);
 
   const selected=addresses.find(a=>a.id===addressId);
+  useEffect(()=>{
+    if(!selected?.city){setShippingEstimate(null);return;}
+    let live=true;setShippingEstimate(null);
+    getShippingEstimate(selected.city).then(result=>{if(live)setShippingEstimate(result);})
+      .catch(()=>{if(live)setShippingEstimate(null);});
+    return()=>{live=false;};
+  },[selected?.city]);
+
   const locationReady=selected?.latitude!==null&&selected?.latitude!==undefined&&
     selected?.longitude!==null&&selected?.longitude!==undefined;
   const locationLink=locationReady?
@@ -139,7 +149,15 @@ export function CustomerCheckout({cart,products,onCompleted}:{
         {error&&<p className="fahdan-checkout-warning" role="alert">{error}</p>}
         {items&&!quote&&!error&&<p>جارٍ مراجعة الأسعار والمخزون في الخادم…</p>}
         {quote&&<><div className="fahdan-checkout-total"><span>مجموع المنتجات</span><strong>{formatPrice(quote.subtotalSar)}</strong></div>
-          <div className="fahdan-checkout-total"><span>رسوم الشحن</span><b>تحدد لاحقًا</b></div>
+          <div className="fahdan-checkout-total">
+            <span>رسوم الشحن حسب المدينة</span>
+            <b>{shippingEstimate?.estimateSar!==null&&shippingEstimate?.estimateSar!==undefined?
+              formatPrice(shippingEstimate.estimateSar)+' (تقديري)':'تحدد بعد المراجعة'}</b>
+          </div>
+          <p className="fahdan-checkout-shipping-note">
+            {shippingEstimate?.notice||'يُحدّد المتجر رسوم التوصيل قبل تأكيد الطلب.'}
+            {' '}<Link to="/shipping-policy">سياسة الشحن والتوصيل</Link>
+          </p>
           <div className="fahdan-checkout-total"><span>الضرائب والإجمالي النهائي</span><b>تحدد بعد المراجعة</b></div>
           <p className="fahdan-checkout-note">{quote.notice}</p>
         </>}
