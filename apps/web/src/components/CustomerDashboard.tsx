@@ -1,7 +1,8 @@
 import { lazy, Suspense, useEffect, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
+import { CustomerReturns } from './CustomerReturns';
 const AddressMap = lazy(() => import('./AddressMap').then(mod => ({ default: mod.AddressMap })));
-import { ArrowLeft, ChevronLeft, CheckCircle2, Clock3, Edit3, Home, LogOut, Mail, MapPin, Package, Plus, Save, ShieldCheck, Trash2, Truck, UserRound, X } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, CheckCircle2, Clock3, Edit3, Home, LogOut, Mail, MapPin, Package, Plus, RotateCcw, FileText, Save, ShieldCheck, Trash2, Truck, UserRound, X } from 'lucide-react';
 import {
   createCustomerAddress, defaultCustomerAddress, deleteCustomerAddress,
   getAccountProfile, getCustomerAddresses, getCustomerOrders,
@@ -9,7 +10,7 @@ import {
   type AccountProfile, type Customer, type CustomerAddress, type CustomerAddressInput, type CustomerOrder
 } from '../api';
 
-type Tab = 'overview'|'profile'|'addresses'|'orders';
+type Tab = 'overview'|'profile'|'addresses'|'orders'|'returns';
 const SESSION_KEY='fahdan-customer-session';
 const emptyAddress:CustomerAddressInput={
   label:'المنزل',recipientName:'',phone:'',city:'',district:'',street:'',
@@ -137,7 +138,8 @@ export function CustomerDashboard({onProfileUpdated,onLogout}:{
     {id:'overview',title:'نظرة عامة',icon:Home},
     {id:'profile',title:'بياناتي الشخصية',icon:UserRound},
     {id:'addresses',title:'عناوين الشحن',icon:MapPin},
-    {id:'orders',title:'طلباتي',icon:Package}
+    {id:'orders',title:'طلباتي',icon:Package},
+    {id:'returns',title:'الاستبدال والاسترجاع',icon:RotateCcw}
   ];
   return <main className="account-page">
     <div className="container">
@@ -239,6 +241,7 @@ export function CustomerDashboard({onProfileUpdated,onLogout}:{
                 <button className="button dark" onClick={()=>openAddress()}><Plus size={17}/> إضافة عنوان</button></div>}
             {addresses.length>=10&&<p className="account-form-help">الحد الأقصى للعناوين المحفوظة هو 10.</p>}
           </>}
+          {tab==='returns'&&<CustomerReturns token={token} orders={orders}/>}
           {tab==='orders'&&<>
             <div className="account-section-title"><div><span className="section-kicker">مشترياتك</span><h2>الطلبات السابقة</h2></div><Truck size={24}/></div>
             {orders.length? <div className="account-orders">{orders.map(order=>
@@ -250,6 +253,12 @@ export function CustomerDashboard({onProfileUpdated,onLogout}:{
                   {order.items.map(item=><div className="account-order-item" key={item.id}>
                     <span>{item.productNameAr} × {item.quantityItems}</span><b>{currency(item.totalPriceSar)}</b>
                   </div>)}
+                  <div className="fahdan-order-document-link">
+                    <Link to={`/account/orders/${order.id}/document`}>
+                      <FileText size={16}/> طباعة مستند الطلب / إيصال الشراء
+                    </Link>
+                    <button type="button" onClick={()=>openTab('returns')}><RotateCcw size={16}/> الاستبدال والاسترجاع</button>
+                  </div>
                   {order.delivery&&<div className="account-order-delivery">
                     <strong><MapPin size={16}/> عنوان التسليم المحفوظ مع الطلب</strong>
                     <p>{order.delivery.city}، {order.delivery.district}، {order.delivery.street}</p>
