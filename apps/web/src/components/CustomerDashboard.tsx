@@ -248,7 +248,7 @@ export function CustomerDashboard({onProfileUpdated,onLogout}:{
               <details key={order.id} className="account-order">
                 <summary><div><b>الطلب #{order.orderNumber}</b><small>{dateFormat(order.createdAt)}</small></div>
                   <span className="account-order-status">{orderNames[order.state]||order.state}</span>
-                  <strong>{currency(order.totalSar)}</strong><ChevronLeft size={17}/></summary>
+                  <strong>{order.state==='AWAITING_REVIEW'?'مجموع مبدئي '+currency(order.totalSar):currency(order.totalSar)}</strong><ChevronLeft size={17}/></summary>
                 <div className="account-order-detail">
                   {order.items.map(item=><div className="account-order-item" key={item.id}>
                     <span>{item.productNameAr} × {item.quantityItems}</span><b>{currency(item.totalPriceSar)}</b>
