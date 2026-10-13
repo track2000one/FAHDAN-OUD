@@ -333,3 +333,68 @@ export function getCustomerOrderDocument(token:string,id:string){
     headers:{Authorization:`Bearer ${token}`}
   });
 }
+
+
+export type MerchantBillingSettings={
+  legalNameAr:string;tradeNameAr:string;commercialRegistration:string;
+  taxStatus:'UNCONFIRMED'|'REGISTERED'|'NOT_REGISTERED';
+  vatNumber:string;zatcaPhase:'UNDETERMINED'|'PHASE1'|'PHASE2';
+  nationalAddress:string;customerServiceEmail:string;customerServicePhone:string;
+  documentNotes:string;reviewedByMerchant:boolean;
+};
+export type DeliveryRateEntry={city:string;feeSar:string;etaText:string};
+export type MerchantShippingSettings={
+  policyPublished:boolean;rateEntries:DeliveryRateEntry[];
+  shippingPolicy:string;specialNotice:string;
+};
+export type MerchantPaymentSettings={
+  preferredProvider:'UNDECIDED'|'MOYASAR'|'TAP'|'HYPERPAY'|'OTHER';
+  preferredMethods:('MADA'|'VISA_MASTERCARD'|'APPLE_PAY'|'BANK_TRANSFER'|'CASH_ON_DELIVERY')[];
+  agreementReviewed:boolean;readinessNotes:string;
+};
+export function getMerchantBilling(token:string){
+  return request<{settings:MerchantBillingSettings;compliance:{
+    fatoorahConnected:boolean;taxInvoiceIssuingEnabled:boolean;notice:string;
+  }}>('/admin/merchant/billing',{headers:{Authorization:`Bearer ${token}`}});
+}
+export function saveMerchantBilling(token:string,settings:MerchantBillingSettings){
+  return request<{message:string;settings:MerchantBillingSettings}>('/admin/merchant/billing',{
+    method:'PUT',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify(settings)
+  });
+}
+export function getMerchantShipping(token:string){
+  return request<{settings:MerchantShippingSettings}>('/admin/merchant/shipping',{
+    headers:{Authorization:`Bearer ${token}`}
+  });
+}
+export function saveMerchantShipping(token:string,settings:MerchantShippingSettings){
+  return request<{message:string;settings:MerchantShippingSettings}>('/admin/merchant/shipping',{
+    method:'PUT',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify(settings)
+  });
+}
+export function getMerchantPayments(token:string){
+  return request<{settings:MerchantPaymentSettings;gatewayConnected:boolean;
+    liveCollectionEnabled:boolean;notice:string}>('/admin/merchant/payments',{
+    headers:{Authorization:`Bearer ${token}`}
+  });
+}
+export function saveMerchantPayments(token:string,settings:MerchantPaymentSettings){
+  return request<{message:string;settings:MerchantPaymentSettings}>('/admin/merchant/payments',{
+    method:'PUT',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify(settings)
+  });
+}
+export type ShippingPolicyPublic={
+  configured:boolean;rates:DeliveryRateEntry[];policy:string|null;
+  specialNotice:string|null;notice:string;
+};
+export function getPublicShippingPolicy(){
+  return request<ShippingPolicyPublic>('/shipping-policy');
+}
+export type ShippingEstimate={
+  city:string;estimateSar:string|null;etaText:string|null;confirmed:false;notice:string;
+};
+export function getShippingEstimate(city:string){
+  return request<ShippingEstimate>('/shipping-estimate',{
+    method:'POST',body:JSON.stringify({city})
+  });
+}
